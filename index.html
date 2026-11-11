@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#202831">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BoxdBuddy">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px);background:#202831}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>BoxdBuddy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Single dark look in the user's chosen Letterboxd-style colours: slate blue-grey room, dark buttons, orange for the pick, green for stats, blue for links. */
+:root{
+  --bg:#202831; --panel:#2C3440; --panel-hi:#1B1F26; --line:#3D4754;
+  --ink:#F2F5F8; --muted:#9AABBC; --ticket:#DEE6EE; --ticket-ink:#14181C; --ticket-muted:#5A6B7C;
+  --accent:#FF8000; --accent-ink:#14181C; --accent-soft:rgba(255,128,0,.16);
+  --green:#00E054; --green-soft:rgba(0,224,84,.14); --blue:#3FBAF1; --blue-soft:rgba(63,186,241,.15);
+  --good:#00E054; --bad:#FF6B5A; --placeholder:#6E7F90; --stub-line:rgba(20,24,28,.22); --stub-tag:rgba(20,24,28,.08);
+  --display:"Big Shoulders Display","Figtree",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background-color:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:680px;margin:0 auto;padding-block:18px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:900;font-size:2.4rem;letter-spacing:.02em;text-transform:uppercase;margin:0;line-height:1}
+h1 span{color:var(--accent)}
+.sync{font-size:.8rem;color:var(--muted);font-weight:600}
+h2{font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:.03em;text-transform:uppercase;margin:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.muted{color:var(--muted)}.small{font-size:.86rem}
+button,.btn{font:inherit;font-weight:700;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--panel-hi);color:var(--ink);padding:10px 16px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button:hover,.btn:hover{border-color:var(--blue)}
+button:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:1.15rem;padding:16px 22px;width:100%;font-family:var(--display);font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input::placeholder{color:var(--placeholder)}
+
+/* the ticket */
+.ticket{position:relative;background:var(--ticket);color:var(--ticket-ink);border-radius:14px;padding:22px 22px 20px;display:grid;grid-template-columns:1fr auto;gap:4px 16px;min-height:170px;
+  -webkit-mask:radial-gradient(circle 11px at 0 62%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 11px at 100% 62%,transparent 98%,#000) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 11px at 0 62%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 11px at 100% 62%,transparent 98%,#000) right/51% 100% no-repeat}
+.ticket .admit{grid-column:1/-1;font-family:var(--display);font-weight:800;letter-spacing:.22em;text-transform:uppercase;font-size:.8rem;color:var(--ticket-muted);display:flex;justify-content:space-between;gap:8px}
+.ticket .title{font-family:var(--display);font-weight:900;font-size:clamp(2rem,7vw,2.9rem);line-height:.98;text-transform:uppercase;margin:6px 0 2px;text-wrap:balance;overflow-wrap:anywhere;min-width:0}
+.ticket .year{font-family:var(--display);font-weight:800;font-size:1.6rem;color:var(--ticket-muted);align-self:end;font-variant-numeric:tabular-nums}
+.ticket .stub{grid-column:1/-1;border-top:2px dashed var(--stub-line);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--ticket-muted)}
+.ticket a{color:var(--ticket-ink);font-weight:700}
+.ticket.spinning .title{filter:blur(.6px);opacity:.75}
+.ticket.idle .title{color:var(--ticket-muted)}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.ticket .tag{background:var(--stub-tag);color:var(--ticket-ink)}
+
+/* list */
+.listhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.count{font-family:var(--display);font-weight:800;font-size:1.35rem;color:var(--green);font-variant-numeric:tabular-nums}
+ul.films{list-style:none;margin:0;padding:0;max-height:420px;overflow:auto;border-top:1px solid var(--line)}
+ul.films li{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);min-width:0}
+ul.films li.hit{background:var(--green-soft);border-radius:8px}
+ul.films .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.films .t a{color:var(--ink);text-decoration:none}
+ul.films .t a:hover{text-decoration:underline}
+ul.films .y{color:var(--muted);font-variant-numeric:tabular-nums;font-size:.9rem}
+ul.films button{padding:4px 10px;font-size:.8rem;border-radius:8px;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:18px 0}
+
+/* import */
+.drop{border:2px dashed var(--line);border-radius:14px;padding:22px 16px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center}
+.drop.over{border-color:var(--blue);background:var(--blue-soft)}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+ol.steps a{color:var(--blue)}
+.result{font-size:.92rem;padding:10px 12px;border-radius:10px;background:var(--bg)}
+.result b.add{color:var(--good)}.result b.rem{color:var(--bad)}
+.addgrid{display:grid;grid-template-columns:1fr 92px auto;gap:8px}
+@media (max-width:460px){.addgrid{grid-template-columns:1fr 80px}.addgrid button{grid-column:1/-1}}
+details summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";font-size:1.3rem;color:var(--muted)}
+details[open] summary::after{content:"–"}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:.9rem;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+/* tabs + stats */
+[hidden]{display:none!important}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel-hi);border:1px solid var(--line);border-radius:14px;padding:5px}
+.tabs button{border:0;background:transparent;color:var(--muted);font-family:var(--display);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:1.05rem;padding:10px}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+#tabStats[aria-selected="true"]{background:var(--green)}
+.view{display:flex;flex-direction:column;gap:16px}
+.yearrow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.yearrow h2{font-size:2rem;line-height:1}
+.yearrow h2 span{color:var(--green)}
+.years{display:flex;gap:6px;flex-wrap:wrap}
+.years button{padding:6px 12px;font-size:.85rem;border-radius:99px;font-variant-numeric:tabular-nums}
+.years button[aria-pressed="true"]{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{grid-column:span 1;background:var(--panel);border:1px solid var(--line);border-radius:16px;min-width:0;display:flex;flex-direction:column}
+.stat.wide{grid-column:1/-1}
+.stat>button{all:unset;cursor:pointer;display:grid;grid-template-columns:1fr auto;align-items:end;gap:2px 10px;padding:16px 18px;border-radius:16px;min-width:0}
+.stat>button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.stat>button:hover{background:rgba(255,255,255,.03)}
+.stat .lab{grid-column:1/-1;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat .big{font-family:var(--display);font-weight:900;font-size:3rem;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+.stat.wide .big{font-size:clamp(1.9rem,6.5vw,2.5rem);text-transform:uppercase;line-height:1.02;text-wrap:balance}
+.stat .big small{font-size:.5em;color:var(--green);margin-left:2px}
+.stat .sub{grid-column:1/-1;font-size:.86rem;color:var(--muted)}
+.stat .chev{color:var(--muted);font-size:.8rem;font-weight:700;align-self:center;white-space:nowrap}
+.stat .chev{color:var(--blue)!important}.stat[data-open] .chev{color:var(--accent)!important}
+.detail{border-top:1px dashed var(--line);padding:12px 18px 18px;display:flex;flex-direction:column;gap:10px}
+.detail h3{margin:0;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+ol.top5{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+ol.top5 li{display:grid;grid-template-columns:28px 1fr auto;gap:2px 10px;align-items:baseline;min-width:0}
+ol.top5 .rk{font-family:var(--display);font-weight:900;font-size:1.3rem;color:var(--green);font-variant-numeric:tabular-nums}
+ol.top5 .nm{font-weight:700;min-width:0;overflow-wrap:anywhere}
+ol.top5 .ct{font-variant-numeric:tabular-nums;font-weight:700;font-size:.9rem;white-space:nowrap}
+ol.top5 .bar{grid-column:2/-1;height:6px;border-radius:3px;background:var(--panel-hi);overflow:hidden}
+ol.top5 .bar i{display:block;height:100%;background:var(--green);border-radius:3px}
+ol.top5 .fl{grid-column:2/-1;font-size:.8rem;color:var(--muted);min-width:0}
+.hist{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;align-items:end;height:90px}
+.hist div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%;min-width:0}
+.hist i{display:block;width:100%;background:var(--green);border-radius:3px 3px 0 0;min-height:2px}
+.hist i.zero{background:var(--line)}
+.hist span{font-size:.62rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hist b{font-size:.68rem;font-variant-numeric:tabular-nums}
+.months{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:80px}
+.missing{display:flex;flex-direction:column;gap:10px;font-size:.9rem}
+.src{font-size:.8rem;color:var(--muted)}
+.stat:not(.wide) .big{white-space:nowrap}
+@media (max-width:420px){.stat:not(.wide) .big{font-size:2.3rem}.stat>button{padding:14px}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Boxd<span>Buddy</span></h1>
+    <span class="sync" id="sync">Loading…</span>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="BoxdBuddy sections">
+    <button role="tab" id="tabPick" aria-selected="true" aria-controls="viewPick">Pick</button>
+    <button role="tab" id="tabStats" aria-selected="false" aria-controls="viewStats">Stats</button>
+  </div>
+
+  <div class="view" id="viewStats" role="tabpanel" aria-labelledby="tabStats" hidden>
+    <div class="yearrow">
+      <h2>Your <span id="sYear">2026</span> in film</h2>
+      <div class="years" id="years"></div>
+    </div>
+    <div class="sgrid" id="sgrid"></div>
+    <section class="panel missing" id="missing" hidden></section>
+    <div class="src" id="src"></div>
+  </div>
+
+  <div class="view" id="viewPick" role="tabpanel" aria-labelledby="tabPick">
+
+  <section class="ticket idle" id="ticket" aria-live="polite">
+    <div class="admit"><span>Admit one</span><span id="tNo">Tonight's film</span></div>
+    <div class="title" id="tTitle">Press the button</div>
+    <div class="year" id="tYear"></div>
+    <div class="stub"><span id="tMeta">One random film from your watchlist.</span><span id="tLink"></span></div>
+  </section>
+  <button class="primary" id="pick">Pick a movie</button>
+
+  <section class="panel">
+    <div class="listhead">
+      <h2>Your watchlist</h2>
+      <span class="count" id="count">0</span>
+    </div>
+    <div class="small muted" id="updated"></div>
+    <input id="search" type="search" placeholder="Search your watchlist" aria-label="Search your watchlist">
+    <ul class="films" id="list"></ul>
+  </section>
+
+  <section class="panel">
+    <details id="addBox">
+      <summary><h2>Add one film</h2></summary>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+        <p class="small muted" style="margin:0">Just added something on Letterboxd? Add it here too so you don't need a new export.</p>
+        <div class="addgrid">
+          <input id="aTitle" placeholder="Film title" aria-label="Film title">
+          <input id="aYear" placeholder="Year" inputmode="numeric" maxlength="4" aria-label="Year">
+          <button id="aBtn">Add</button>
+        </div>
+      </div>
+    </details>
+  </section>
+  </div>
+
+  <section class="panel" id="importPanel">
+    <h2>Update from Letterboxd</h2>
+    <p class="small muted" style="margin:0">Letterboxd doesn't let apps read your account directly, so you bring it in with Letterboxd's own export. One export updates both your watchlist and your stats. Do it whenever you've logged or added a few films.</p>
+    <ol class="steps small">
+      <li>Open <a href="https://letterboxd.com/settings/data/" target="_blank" rel="noopener">Letterboxd → Settings → Data</a> and tap <b>Export your data</b>.</li>
+      <li>Drop the ZIP file it gives you below (or just <b>watchlist.csv</b> or <b>diary.csv</b> from inside it).</li>
+    </ol>
+    <label class="drop" id="drop" for="file">
+      <b>Choose or drop your Letterboxd export</b>
+      <span class="small muted">.zip, watchlist.csv or diary.csv</span>
+    </label>
+    <input id="file" type="file" accept=".zip,.csv,text/csv,application/zip" hidden>
+    <div class="result" id="importResult" hidden></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const LS="boxdbuddy-v1";
+const EXAMPLES=[["Past Lives","2023"],["Paris, Texas","1984"],["Perfect Days","2023"],["In the Mood for Love","2000"],["The Holdovers","2023"],["Chungking Express","1994"]];
+// films: [{t,y,u}]  u = Letterboxd link
+const BUNDLED_WL=[["Jurassic Park", "1993", "https://boxd.it/2aA2"], ["The Lost World: Jurassic Park", "1997", "https://boxd.it/2azS"], ["28 Days Later", "2002", "https://boxd.it/2aXU"], ["The Pursuit of Happyness", "2006", "https://boxd.it/28PE"], ["Sorry to Bother You", "2018", "https://boxd.it/f21E"], ["Lars and the Real Girl", "2007", "https://boxd.it/21tG"], ["The Game", "1997", "https://boxd.it/26vC"], ["Jungle", "2017", "https://boxd.it/dCpo"], ["Coherence", "2013", "https://boxd.it/6xza"], ["I Am Legend", "2007", "https://boxd.it/21DG"], ["The Curious Case of Benjamin Button", "2008", "https://boxd.it/23Fk"], ["Happy Gilmore", "1996", "https://boxd.it/1Yey"], ["Happy Gilmore 2", "2025", "https://boxd.it/M8PQ"], ["Boyhood", "2014", "https://boxd.it/3178"], ["Scott Pilgrim vs. the World", "2010", "https://boxd.it/1Aq6"], ["The Martian", "2015", "https://boxd.it/8SeG"], ["The Hunger Games: Catching Fire", "2013", "https://boxd.it/3sAw"], ["Diary of a Wimpy Kid: Rodrick Rules", "2011", "https://boxd.it/gm2"], ["Borat Subsequent Moviefilm: Delivery of Prodigious Bribe to American Regime for Make Benefit Once Glorious Nation of Kazakhstan", "2020", "https://boxd.it/rNS0"], ["Despicable Me 2", "2013", "https://boxd.it/3gg0"], ["Diary of a Wimpy Kid: Dog Days", "2012", "https://boxd.it/2TG0"], ["Murder Mystery 2", "2023", "https://boxd.it/nHOo"], ["Captain America: Brave New World", "2025", "https://boxd.it/uYDm"], ["The Naked Gun", "2025", "https://boxd.it/Da9k"], ["Kick-Ass", "2010", "https://boxd.it/1zaQ"], ["Over the Hedge", "2006", "https://boxd.it/20QY"], ["Ghostbusters", "1984", "https://boxd.it/g2w"], ["The Wall", "2017", "https://boxd.it/eh1s"], ["The Smashing Machine", "2025", "https://boxd.it/syUC"], ["We're the Millers", "2013", "https://boxd.it/4srQ"], ["Shaun of the Dead", "2004", "https://boxd.it/29J8"], ["Wonka", "2023", "https://boxd.it/tCQm"], ["One Battle After Another", "2025", "https://boxd.it/DUHM"], ["Once Upon a Time... in Hollywood", "2019", "https://boxd.it/gH0O"], ["The Social Network", "2010", "https://boxd.it/17ue"], ["Batman Begins", "2005", "https://boxd.it/2aIg"], ["The Dark Knight", "2008", "https://boxd.it/2b0k"], ["The Dark Knight Rises", "2012", "https://boxd.it/H3m"], ["Barbie", "2023", "https://boxd.it/bCLK"], ["Fantastic Four", "2015", "https://boxd.it/5a9c"], ["Phone Booth", "2002", "https://boxd.it/285G"], ["Bridge to Terabithia", "2007", "https://boxd.it/28YG"], ["The Rip", "2026", "https://boxd.it/NP5y"], ["Spree", "2020", "https://boxd.it/oiiO"], ["The Terminal", "2004", "https://boxd.it/2a2O"], ["Mulholland Drive", "2001", "https://boxd.it/297o"], ["Toy Story 5", "2026", "https://boxd.it/F06E"], ["Liar Liar", "1997", "https://boxd.it/28sg"], ["Yes Man", "2008", "https://boxd.it/1WPW"], ["Supergirl", "2026", "https://boxd.it/ESyU"], ["Cold Storage", "2026", "https://boxd.it/q1FA"], ["The Station Agent", "2003", "https://boxd.it/27xu"], ["The Iron Claw", "2023", "https://boxd.it/w5Pm"], ["Dinner for Schmucks", "2010", "https://boxd.it/15dA"], ["Anchorman: The Legend of Ron Burgundy", "2004", "https://boxd.it/1ZVo"], ["Anchorman 2: The Legend Continues", "2013", "https://boxd.it/3GNk"], ["Bruce Almighty", "2003", "https://boxd.it/2aCC"], ["Evan Almighty", "2007", "https://boxd.it/26s4"], ["Date Night", "2010", "https://boxd.it/2l5a"], ["The Odyssey", "2026", "https://boxd.it/QFQU"], ["The Sheep Detectives", "2026", "https://boxd.it/NDSe"], ["Iron Lung", "2026", "https://boxd.it/GdtI"], ["Old", "2021", "https://boxd.it/npKI"], ["Finding Nemo", "2003", "https://boxd.it/72i"], ["Monsters, Inc.", "2001", "https://boxd.it/2a46"], ["Black Swan", "2010", "https://boxd.it/Sw0"], ["The Notebook", "2004", "https://boxd.it/1UNE"], ["The Lighthouse", "2019", "https://boxd.it/icFU"], ["The Lion King", "1994", "https://boxd.it/201Q"], ["Disclosure Day", "2026", "https://boxd.it/MDJY"], ["Palm Springs", "2020", "https://boxd.it/lCXQ"], ["Ted", "2012", "https://boxd.it/2pgc"], ["Ted 2", "2015", "https://boxd.it/6oCY"], ["Weapons", "2025", "https://boxd.it/EMTM"], ["Eternals", "2021", "https://boxd.it/j36o"], ["10 Years", "2011", "https://boxd.it/k7U"], ["Little Miss Sunshine", "2006", "https://boxd.it/29EW"], ["There Will Be Blood", "2007", "https://boxd.it/20Z2"], ["Chances Are", "1989", "https://boxd.it/25Pw"], ["Shazam!", "2019", "https://boxd.it/8WBu"], ["Monster House", "2006", "https://boxd.it/1Z2e"], ["Remain Calm", "2026", "https://boxd.it/17mxI"], ["Back to the Future", "1985", "https://boxd.it/2b8e"]];
+const state={films:[],updatedAt:null,example:true,picks:[]};
+let coll=null,mode="local",lastIdx=-1,spinning=false;
+
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const key=f=>(f.t||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()+"|"+(f.y||"");
+const lbSearch=f=>"https://letterboxd.com/search/films/"+encodeURIComponent(f.t+(f.y?" "+f.y:""))+"/";
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),2400);}
+function fmtWhen(iso){if(!iso)return"";const d=new Date(iso);return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})+" at "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});}
+
+/* ---------- storage ---------- */
+function pack(){return{kind:"watchlist",films:state.films.map(f=>[f.t,f.y||"",f.u||""]),updatedAt:state.updatedAt,picks:state.picks.slice(0,30)};}
+function unpack(o){if(!o||!Array.isArray(o.films))return false;state.films=o.films.map(a=>({t:a[0],y:a[1],u:a[2]}));state.updatedAt=o.updatedAt||null;state.picks=o.picks||[];state.example=false;return true;}
+function loadLocal(){try{const r=localStorage.getItem(LS);if(r)unpack(JSON.parse(r));}catch(e){}}
+async function save(){
+  try{localStorage.setItem(LS,JSON.stringify(pack()));}catch(e){}
+  if(mode==="cloud"){try{await coll.doc("watchlist").set(pack());}catch(e){toast("Couldn't save to your account. Check your connection.");}}
+}
+async function initStore(){
+  loadLocal(); if(state.example&&BUNDLED_WL.length){state.films=BUNDLED_WL.map(a=>({t:a[0],y:a[1],u:a[2]}));state.updatedAt="2026-11-11T10:30:00Z";state.example=false;}
+  if(state.example)state.films=EXAMPLES.map(([t,y])=>({t,y,u:""}));
+  render(); $("sync").textContent="Saved on this device";
+  if(!(window.claude&&typeof window.claude.use==="function"))return;
+  try{
+    const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+    if(!db||!user)return;
+    const id=await user.id(); if(!id)return;
+    coll=db.collection("data/users/"+id); mode="cloud"; $("sync").textContent="Syncing…"; watchCloudStats();
+    let first=true;
+    const timer=setTimeout(()=>{if(first)$("sync").textContent="Saved on this device";},10000);
+    coll.doc("watchlist").onSnapshot(snap=>{
+      clearTimeout(timer);
+      const v=snap&&snap.exists?snap.data():null;
+      if(v){ if(!(first&&spinning))unpack(v); }
+      else if(first&&!state.example){ coll.doc("watchlist").set(pack()).catch(()=>{}); }
+      first=false; $("sync").textContent="Synced to your account"; render();
+    },()=>{$("sync").textContent="Offline: changes stay on this device";});
+  }catch(e){}
+}
+
+/* ---------- render ---------- */
+function render(){
+  $("count").textContent=state.example?"Examples":state.films.length+" film"+(state.films.length===1?"":"s");
+  $("updated").textContent=state.example?"These are example films. Bring in your real watchlist below.":(state.updatedAt?"Last updated from Letterboxd "+fmtWhen(state.updatedAt):"");
+  const q=$("search").value.trim().toLowerCase();
+  const rows=state.films.map((f,i)=>({f,i})).filter(r=>!q||r.f.t.toLowerCase().includes(q)).sort((a,b)=>a.f.t.localeCompare(b.f.t));
+  $("list").innerHTML=rows.length?rows.map(({f,i})=>'<li data-i="'+i+'"'+(i===lastIdx?' class="hit"':'')+'><span class="t"><a href="'+esc(f.u||lbSearch(f))+'" target="_blank" rel="noopener">'+esc(f.t)+'</a></span><span class="y">'+esc(f.y||"")+'</span>'+(state.example?'<span class="tag">Example</span>':'<button data-del="'+i+'" aria-label="Remove '+esc(f.t)+'">Remove</button>')+'</li>').join("")
+    :'<li class="empty">'+(q?"No films match that search.":"Your watchlist is empty. Import it from Letterboxd below.")+'</li>';
+  $("pick").disabled=!state.films.length||spinning;
+}
+$("search").addEventListener("input",render);
+$("list").addEventListener("click",e=>{
+  const b=e.target.closest("[data-del]"); if(!b)return;
+  const i=Number(b.dataset.del),f=state.films[i]; if(!f)return;
+  state.films.splice(i,1); if(lastIdx===i)lastIdx=-1; else if(lastIdx>i)lastIdx--;
+  save(); render(); toast("Removed "+f.t);
+});
+
+/* ---------- pick ---------- */
+function showFilm(f,final){
+  $("tTitle").textContent=f.t; $("tYear").textContent=f.y||"";
+  if(final){
+    $("tMeta").innerHTML=state.example?'<span class="tag">Example film</span>':'Picked from '+state.films.length+' films';
+    $("tLink").innerHTML='<a href="'+esc(f.u||lbSearch(f))+'" target="_blank" rel="noopener">Open on Letterboxd →</a>';
+  }
+}
+function randIdx(){
+  const n=state.films.length; if(n<2)return 0;
+  const recent=new Set(state.picks.slice(0,Math.min(5,n-1)).map(p=>p.k));
+  const pool=state.films.map((f,i)=>i).filter(i=>i!==lastIdx&&!recent.has(key(state.films[i])));
+  const from=pool.length?pool:state.films.map((f,i)=>i).filter(i=>i!==lastIdx);
+  const a=new Uint32Array(1);crypto.getRandomValues(a);return from[a[0]%from.length];
+}
+$("pick").addEventListener("click",()=>{
+  if(!state.films.length||spinning)return;
+  const target=randIdx(); spinning=true; render();
+  const tk=$("ticket"); tk.classList.remove("idle"); tk.classList.add("spinning");
+  $("tMeta").textContent="Rolling the reel…"; $("tLink").textContent="";
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const steps=reduce?0:Math.min(18,state.films.length*3); let s=0;
+  const tick=()=>{
+    if(s<steps){showFilm(state.films[Math.floor(Math.random()*state.films.length)],false);s++;setTimeout(tick,45+s*s*1.1);return;}
+    tk.classList.remove("spinning"); spinning=false; lastIdx=target;
+    const f=state.films[target]; showFilm(f,true);
+    $("tNo").textContent="No. "+String(target+1).padStart(3,"0");
+    if(!state.example){state.picks.unshift({k:key(f),at:new Date().toISOString()});state.picks=state.picks.slice(0,30);save();}
+    $("pick").textContent="Pick again"; render();
+  };
+  tick();
+});
+
+/* ---------- import ---------- */
+function parseCSV(text){
+  const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++;}else q=false;}else cell+=c;}
+    else if(c==='"')q=true; else if(c===","){row.push(cell);cell="";}
+    else if(c==="\n"||c==="\r"){if(c==="\r"&&text[i+1]==="\n")i++;row.push(cell);rows.push(row);row=[];cell="";}
+    else cell+=c;}
+  if(cell||row.length){row.push(cell);rows.push(row);}
+  return rows.filter(r=>r.some(x=>x.trim()));
+}
+function filmsFromCSV(text){
+  const rows=parseCSV(text.replace(/^﻿/,"")); if(!rows.length)throw new Error("That file is empty.");
+  const h=rows[0].map(x=>x.trim().toLowerCase());
+  const ni=h.indexOf("name"),yi=h.indexOf("year"),ui=h.findIndex(x=>x.includes("letterboxd uri")||x==="url"||x==="uri");
+  if(ni<0)throw new Error("This doesn't look like a Letterboxd watchlist file. Use watchlist.csv from the export.");
+  return rows.slice(1).map(r=>({t:(r[ni]||"").trim(),y:yi>=0?(r[yi]||"").trim():"",u:ui>=0?(r[ui]||"").trim():""})).filter(f=>f.t);
+}
+async function readFile(file){
+  if(/\.zip$/i.test(file.name)||file.type.includes("zip")){
+    if(!window.JSZip)throw new Error("Couldn't open the ZIP here. Unzip it and choose watchlist.csv or diary.csv instead.");
+    const zip=await JSZip.loadAsync(file);
+    const find=re=>Object.keys(zip.files).filter(n=>re.test(n)&&!/(deleted|orphaned)\//i.test(n)).sort((a,b)=>a.length-b.length)[0];
+    const w=find(/(^|\/)watchlist\.csv$/i),d=find(/(^|\/)diary\.csv$/i);
+    if(!w&&!d)throw new Error("No watchlist.csv or diary.csv in that ZIP. Make sure it's the Letterboxd data export.");
+    return{films:w?filmsFromCSV(await zip.file(w).async("string")):null,diary:d?diaryFromCSV(await zip.file(d).async("string")):null};
+  }
+  const t=await file.text();
+  const dr=diaryFromCSV(t); if(dr)return{films:null,diary:dr};
+  if(/(ratings|reviews|watched|likes)/i.test(file.name))throw new Error("That's "+file.name+". Choose watchlist.csv or diary.csv, or the whole ZIP.");
+  return{films:filmsFromCSV(t),diary:null};
+}
+async function handleFile(file){
+  if(!file)return;
+  const res=$("importResult"); res.hidden=false; res.textContent="Reading "+file.name+"…";
+  try{
+    const got=await readFile(file); const msg=[];
+    if(got.diary){
+      const before=new Set(diary.bundled?[]:diary.rows.map(r=>r.join("|")));
+      const fresh=got.diary.filter(r=>!before.has(r.join("|"))).length;
+      diary.rows=got.diary; diary.updatedAt=new Date().toISOString(); diary.bundled=false;
+      await saveDiary(); renderStats();
+      msg.push("Diary: <b>"+got.diary.length+"</b> entries"+(before.size?" (<b class=\"add\">+"+fresh+" new</b>)":"")+".");
+    }
+    const incoming=got.films;
+    if(incoming&&incoming.length){
+      const old=state.example?[]:state.films;
+      const oldKeys=new Set(old.map(key)),newKeys=new Set(incoming.map(key));
+      const added=incoming.filter(f=>!oldKeys.has(key(f)));
+      const removed=old.filter(f=>!newKeys.has(key(f)));
+      const seen=new Set();state.films=incoming.filter(f=>{const k=key(f);if(seen.has(k))return false;seen.add(k);return true;});
+      state.example=false; state.updatedAt=new Date().toISOString(); lastIdx=-1;
+      await save(); render();
+      msg.unshift("Watchlist: <b>"+state.films.length+"</b> films."+(old.length?" <b class=\"add\">+"+added.length+" new</b>"+(added.length?" ("+added.slice(0,4).map(f=>esc(f.t)).join(", ")+(added.length>4?"…":"")+")":"")+", <b class=\"rem\">"+removed.length+" removed</b>.":""));
+    }
+    if(!msg.length)throw new Error("That file has no films in it.");
+    res.innerHTML=msg.join("<br>");
+    toast(got.diary&&incoming?"Watchlist and stats updated":got.diary?"Stats updated":"Watchlist updated");
+  }catch(e){res.textContent=e.message||"Couldn't read that file.";}
+  $("file").value="";
+}
+$("file").addEventListener("change",e=>handleFile(e.target.files[0]));
+const drop=$("drop");
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
+
+/* ---------- add one ---------- */
+$("aBtn").addEventListener("click",()=>{
+  const t=$("aTitle").value.trim(),y=$("aYear").value.trim();
+  if(!t){toast("Type a film title first");$("aTitle").focus();return;}
+  if(y&&!/^\d{4}$/.test(y)){toast("Year should be 4 digits");$("aYear").focus();return;}
+  if(state.example){state.films=[];state.example=false;}
+  const f={t,y,u:""};
+  if(state.films.some(x=>key(x)===key(f))){toast(t+" is already on your watchlist");return;}
+  state.films.push(f); save(); $("aTitle").value=""; $("aYear").value=""; render(); toast("Added "+t);
+});
+$("aYear").addEventListener("keydown",e=>{if(e.key==="Enter")$("aBtn").click();});
+$("aTitle").addEventListener("keydown",e=>{if(e.key==="Enter")$("aBtn").click();});
+
+/* ---------- stats ---------- */
+const BUNDLED={at:"2026-11-11T10:30:00Z",rows:[["2024-02-13","Captain America: Civil War","2016","5",1,"https://boxd.it/60DHfJ"],["2024-02-25","Iron Man","2008","4.5",1,"https://boxd.it/60DFI5"],["2024-02-26","The Incredible Hulk","2008","2.5",0,"https://boxd.it/60DFRr"],["2024-02-29","Iron Man 2","2010","3",1,"https://boxd.it/60DFWL"],["2024-03-01","Thor","2011","3",1,"https://boxd.it/60DGVz"],["2024-03-01","Captain America: The First Avenger","2011","4",1,"https://boxd.it/60DH5f"],["2024-03-03","The Avengers","2012","4.5",1,"https://boxd.it/60DH8D"],["2024-03-07","Enemy","2013","3",0,"https://boxd.it/60DFq1"],["2024-03-11","The Shining","1980","4",0,"https://boxd.it/62FpS1"],["2024-03-13","Iron Man 3","2013","3",1,"https://boxd.it/62Fqer"],["2024-03-17","Thor: The Dark World","2013","2.5",1,"https://boxd.it/65vT6N"],["2024-03-19","Captain America: The Winter Soldier","2014","4.5",1,"https://boxd.it/65vUyN"],["2024-03-22","Guardians of the Galaxy","2014","4.5",1,"https://boxd.it/66FPJv"],["2024-03-24","Avengers: Age of Ultron","2015","4",1,"https://boxd.it/67GNH9"],["2024-03-26","Ant-Man","2015","3.5",1,"https://boxd.it/68I05j"],["2024-03-31","Chronicle","2012","3",0,"https://boxd.it/6bmvIT"],["2024-04-13","Eternal Sunshine of the Spotless Mind","2004","4.5",0,"https://boxd.it/6gGCyh"],["2024-04-20","The Cabin in the Woods","2011","3",0,"https://boxd.it/6jm9ep"],["2024-04-28","Annihilation","2018","3",0,"https://boxd.it/6mTOzL"],["2024-04-29","Ex Machina","2015","2",0,"https://boxd.it/6n9nOB"],["2024-05-04","Predestination","2014","2.5",0,"https://boxd.it/6pcJRh"],["2024-05-05","Get Out","2017","5",1,"https://boxd.it/6pCWn7"],["2024-05-12","A Quiet Place","2018","4",0,"https://boxd.it/6sZG4B"],["2024-05-13","A Quiet Place Part II","2020","4",0,"https://boxd.it/6w7AJr"],["2024-06-02","Parasite","2019","4.5",0,"https://boxd.it/6B5oKt"],["2024-06-09","The Sixth Sense","1999","4",0,"https://boxd.it/6DUfaL"],["2024-06-22","Star Wars: Episode I – The Phantom Menace","1999","4",0,"https://boxd.it/6IN7Yp"],["2024-06-22","Star Wars: Episode II – Attack of the Clones","2002","4",0,"https://boxd.it/6IQQOl"],["2024-06-23","Star Wars: Episode III – Revenge of the Sith","2005","5",0,"https://boxd.it/6JgKF5"],["2024-06-23","Star Wars","1977","4",0,"https://boxd.it/6JkhY1"],["2024-06-26","The Empire Strikes Back","1980","5",0,"https://boxd.it/6KDdB5"],["2024-07-13","Drive","2011","3.5",0,"https://boxd.it/6RPqSZ"],["2024-07-17","Return of the Jedi","1983","5",0,"https://boxd.it/6TIDbX"],["2024-07-18","Star Wars: The Force Awakens","2015","3.5",0,"https://boxd.it/6U8Gip"],["2024-07-27","Deadpool & Wolverine","2024","4",0,"https://boxd.it/6YfYlr"],["2024-07-28","The Karate Kid","1984","3.5",1,"https://boxd.it/6YAadJ"],["2024-08-05","X-Men","2000","4",1,"https://boxd.it/72flxz"],["2024-08-06","X2","2003","4",1,"https://boxd.it/72FlTn"],["2024-08-07","X-Men: The Last Stand","2006","4",1,"https://boxd.it/72XyTh"],["2024-08-07","X-Men: Days of Future Past","2014","4.5",1,"https://boxd.it/73psQH"],["2024-08-08","Avengers: Infinity War","2018","5",1,"https://boxd.it/73E5h5"],["2024-08-09","Avengers: Endgame","2019","5",1,"https://boxd.it/73QFY9"],["2024-08-17","Nightcrawler","2014","3.5",0,"https://boxd.it/77sqAT"],["2024-08-18","Coraline","2009","4",1,"https://boxd.it/77XigD"],["2024-08-21","Interstellar","2014","5",1,"https://boxd.it/79s6Ax"],["2024-08-28","Thor: Ragnarok","2017","4.5",1,"https://boxd.it/7cDvgL"],["2024-09-01","The Box","2009","2",0,"https://boxd.it/7eua5R"],["2024-09-20","Late Night with the Devil","2023","3.5",0,"https://boxd.it/7mVKdt"],["2024-09-25","The Black Phone","2021","4",1,"https://boxd.it/7pbaXb"],["2024-10-07","It's What's Inside","2024","4",0,"https://boxd.it/7uDovh"],["2024-10-12","Sliding Doors","1998","3",0,"https://boxd.it/7x33tf"],["2024-10-13","Brothers","2009","4.5",0,"https://boxd.it/7xvZp7"],["2024-10-13","Jumanji","1995","4",1,"https://boxd.it/7xAjtB"],["2024-10-19","The Substance","2024","1.5",0,"https://boxd.it/7Azjwv"],["2024-11-02","Leave the World Behind","2023","3",1,"https://boxd.it/7HPWeZ"],["2024-11-02","The Thing","1982","4",1,"https://boxd.it/7HWqrh"],["2024-11-02","Boyz n the Hood","1991","3",0,"https://boxd.it/7I1i0R"],["2024-11-05","Avengers: Endgame","2019","5",1,"https://boxd.it/7JK4Ch"],["2024-11-09","The Butterfly Effect","2004","4",1,"https://boxd.it/7Lnr03"],["2024-11-23","Inglourious Basterds","2009","4.5",1,"https://boxd.it/7SvbgN"],["2024-11-25","Saving Private Ryan","1998","4",1,"https://boxd.it/7TDhSj"],["2024-11-25","Hacksaw Ridge","2016","4.5",1,"https://boxd.it/7TG905"],["2024-11-26","1917","2019","4",1,"https://boxd.it/7U1cC9"],["2024-11-26","Tenet","2020","2.5",0,"https://boxd.it/7U7TSV"],["2024-11-27","Blink Twice","2024","4",0,"https://boxd.it/7UAPKh"],["2024-11-27","I Saw the TV Glow","2024","0.5",0,"https://boxd.it/9ULWw5"],["2024-11-29","White Chicks","2004","3.5",0,"https://boxd.it/7VNQMt"],["2024-11-30","How to Lose a Guy in 10 Days","2003","3.5",0,"https://boxd.it/7W6iIl"],["2024-12-04","10 Things I Hate About You","1999","3.5",0,"https://boxd.it/7Y6wK9"],["2024-12-10","Home Alone","1990","4",1,"https://boxd.it/83tJ97"],["2024-12-14","Se7en","1995","4.5",1,"https://boxd.it/82Tr0f"],["2024-12-17","Here","2024","3.5",0,"https://boxd.it/84Kofr"],["2024-12-17","Django Unchained","2012","5",1,"https://boxd.it/84NUNr"],["2024-12-18","Fight Club","1999","5",1,"https://boxd.it/85e20T"],["2024-12-20","Kingsman: The Secret Service","2014","4",1,"https://boxd.it/86fQtn"],["2024-12-21","Reservoir Dogs","1992","4",0,"https://boxd.it/86WMNz"],["2024-12-30","Two Distant Strangers","2020","2",0,"https://boxd.it/8edQ2p"],["2024-12-30","Naked","2017","2.5",1,"https://boxd.it/8eiboJ"],["2024-12-31","We Live in Time","2024","4",0,"https://boxd.it/8fgSD3"],["2025-01-01","Requiem for a Dream","2000","2",0,"https://boxd.it/8g0ej5"],["2025-01-05","The Silence of the Lambs","1991","3.5",0,"https://boxd.it/8kqdfT"],["2025-01-10","The Usual Suspects","1995","3.5",0,"https://boxd.it/8pf1yR"],["2025-01-20","Train to Busan","2016","4.5",0,"https://boxd.it/8xWbJ9"],["2025-01-23","Toy Story","1995","5",1,"https://boxd.it/8Abu9n"],["2025-01-23","The Incredibles","2004","5",1,"https://boxd.it/8AdCwD"],["2025-01-24","Toy Story 2","1999","5",1,"https://boxd.it/8AQumj"],["2025-01-27","The Matrix","1999","3.5",0,"https://boxd.it/8DRfq5"],["2025-01-29","Star Wars: Episode III – Revenge of the Sith","2005","5",1,"https://boxd.it/8EVtk3"],["2025-02-17","Bird Box","2018","3.5",0,"https://boxd.it/8RPHOL"],["2025-02-28","Zombieland","2009","4.5",1,"https://boxd.it/8YvzND"],["2025-02-28","Zombieland: Double Tap","2019","4.5",1,"https://boxd.it/8YEcPJ"],["2025-03-01","La La Land","2016","5",1,"https://boxd.it/8Z2Dmn"],["2025-03-01","Whiplash","2014","5",1,"https://boxd.it/8Z8jzX"],["2025-03-02","Children of Men","2006","3",0,"https://boxd.it/90048v"],["2025-03-15","Shrek","2001","5",1,"https://boxd.it/97UL3X"],["2025-03-15","Shrek 2","2004","5",1,"https://boxd.it/97Y1Zz"],["2025-03-15","Shrek Forever After","2010","4",1,"https://boxd.it/982iDj"],["2025-03-15","The Impossible","2012","4",1,"https://boxd.it/985RJd"],["2025-03-22","Life Is Beautiful","1997","5",1,"https://boxd.it/9c97YZ"],["2025-03-23","The Postman","1994","2.5",0,"https://boxd.it/9cRpSD"],["2025-03-30","The Princess Bride","1987","3",0,"https://boxd.it/9gOYdv"],["2025-04-06","A Minecraft Movie","2025","2.5",0,"https://boxd.it/9kweul"],["2025-04-20","Taxi Driver","1976","3.5",0,"https://boxd.it/9sYMRV"],["2025-05-04","Nope","2022","4",1,"https://boxd.it/9B9bTJ"],["2025-05-10","Thunderbolts*","2025","4",0,"https://boxd.it/9EzB9L"],["2025-05-12","One Hour Photo","2002","3",0,"https://boxd.it/9FYo2B"],["2025-05-13","Pulp Fiction","1994","4",0,"https://boxd.it/9Gx8uz"],["2025-05-25","Grease","1978","3",0,"https://boxd.it/9NzqPn"],["2025-05-27","Iron Man","2008","4.5",1,"https://boxd.it/9OXl3b"],["2025-06-05","Blink Twice","2024","3.5",1,"https://boxd.it/9Usu9T"],["2025-06-13","Avengers: Infinity War","2018","5",1,"https://boxd.it/9ZgfQz"],["2025-06-14","Blended","2014","4.5",1,"https://boxd.it/9ZTsPx"],["2025-06-14","Knives Out","2019","5",1,"https://boxd.it/9ZTt85"],["2025-06-29","Society of the Snow","2023","4",0,"https://boxd.it/a9R8YF"],["2025-07-25","50 First Dates","2004","4.5",1,"https://boxd.it/at1UMj"],["2025-07-27","The Fantastic 4: First Steps","2025","4",0,"https://boxd.it/auMrhz"],["2025-07-27","The Ridiculous 6","2015","2.5",1,"https://boxd.it/auS0ut"],["2025-07-29","The Green Mile","1999","5",1,"https://boxd.it/awKiBJ"],["2025-08-02","Night at the Museum","2006","5",1,"https://boxd.it/azPIzh"],["2025-08-02","Night at the Museum: Battle of the Smithsonian","2009","4",1,"https://boxd.it/azQC6v"],["2025-08-03","Don't Worry Darling","2022","4",0,"https://boxd.it/aAwelZ"],["2025-08-03","Just Go with It","2011","4",1,"https://boxd.it/aABQyx"],["2025-08-07","The Mist","2007","3.5",1,"https://boxd.it/aDPv7Z"],["2025-08-16","Superman","2025","4.5",0,"https://boxd.it/aKuMYH"],["2025-08-17","Superman","2025","4.5",1,"https://boxd.it/aLrX15"],["2025-08-21","Life of Pi","2012","4.5",1,"https://boxd.it/aOkEpP"],["2025-08-23","Spider-Man","2002","5",1,"https://boxd.it/aPrIST"],["2025-08-24","Spider-Man 2","2004","5",1,"https://boxd.it/aQihdb"],["2025-08-27","Spider-Man 3","2007","4.5",1,"https://boxd.it/aSx5ih"],["2025-08-30","What Women Want","2000","3.5",0,"https://boxd.it/aUw3Uf"],["2025-08-31","The Amazing Spider-Man","2012","4.5",1,"https://boxd.it/aV1JoH"],["2025-09-01","Run","2020","3",0,"https://boxd.it/aW5Gap"],["2025-09-05","Super","2010","3.5",0,"https://boxd.it/aYy33F"],["2025-09-07","Dead Poets Society","1989","4",0,"https://boxd.it/aZTpY5"],["2025-09-09","The Suicide Squad","2021","4.5",1,"https://boxd.it/b1k4uB"],["2025-09-11","Triangle","2009","3",0,"https://boxd.it/b2oFq9"],["2025-09-19","The Incredible Hulk","2008","2.5",1,"https://boxd.it/b75ior"],["2025-09-21","Iron Man 2","2010","4",1,"https://boxd.it/b8mhdF"],["2025-09-22","The Amazing Spider-Man 2","2014","3.5",1,"https://boxd.it/b8LTIr"],["2025-09-23","Mississippi Burning","1988","3.5",0,"https://boxd.it/b9vjGr"],["2025-09-25","Thor","2011","3",1,"https://boxd.it/baIXkZ"],["2025-10-01","Don't Look Up","2021","3.5",1,"https://boxd.it/bel5wR"],["2025-10-02","Captain America: The First Avenger","2011","4",1,"https://boxd.it/beXpkn"],["2025-10-03","The Avengers","2012","5",1,"https://boxd.it/bfqNhb"],["2025-10-03","The Dictator","2012","4",1,"https://boxd.it/bfucCT"],["2025-10-08","Iron Man 3","2013","3.5",1,"https://boxd.it/biJQTR"],["2025-10-08","Captain America: The Winter Soldier","2014","4.5",1,"https://boxd.it/biUBm1"],["2025-10-09","Thor: The Dark World","2013","2.5",1,"https://boxd.it/bjpzWX"],["2025-10-09","Guardians of the Galaxy","2014","5",1,"https://boxd.it/bjsaq9"],["2025-10-18","Avengers: Age of Ultron","2015","4.5",1,"https://boxd.it/bp8Tzz"],["2025-10-18","Thunderbolts*","2025","4.5",1,"https://boxd.it/bpfbJ5"],["2025-10-19","Black Phone 2","2025","4",0,"https://boxd.it/bpQc7v"],["2025-10-19","Buried","2010","3.5",0,"https://boxd.it/bpZleN"],["2025-10-20","American Psycho","2000","4",1,"https://boxd.it/bqNxc5"],["2025-10-20","The Platform","2019","3.5",0,"https://boxd.it/bqPdXT"],["2025-10-21","22 Jump Street","2014","3.5",1,"https://boxd.it/brrqVd"],["2025-10-22","The Maze Runner","2014","4",1,"https://boxd.it/bs4zp9"],["2025-10-24","The Fantastic 4: First Steps","2025","3.5",1,"https://boxd.it/btgfUp"],["2025-10-25","Scream","1996","4",1,"https://boxd.it/btQxgz"],["2025-10-25","Passengers","2016","4",1,"https://boxd.it/btWNVF"],["2025-10-26","Scream 2","1997","3",1,"https://boxd.it/buwkPb"],["2025-10-27","Scream 3","2000","3.5",1,"https://boxd.it/bvDATV"],["2025-10-28","Scream 4","2011","3.5",1,"https://boxd.it/bwllqn"],["2025-11-04","Ant-Man","2015","3",1,"https://boxd.it/bBdeuV"],["2025-11-05","Captain America: Civil War","2016","5",1,"https://boxd.it/bBU52p"],["2025-11-09","Back to the Future","1985","5",1,"https://boxd.it/bEwSq5"],["2025-11-26","The Wizard of Oz","1939","5",1,"https://boxd.it/bQwynD"],["2025-12-03","Wicked","2024","3",0,"https://boxd.it/bV4T6R"],["2025-12-05","1917","2019","4",1,"https://boxd.it/bWBzkf"],["2025-12-06","Five Nights at Freddy's 2","2025","2.5",0,"https://boxd.it/bWHL0t"],["2025-12-15","Wake Up Dead Man","2025","4",0,"https://boxd.it/c3FDer"],["2025-12-18","Woman of the Hour","2023","3",0,"https://boxd.it/c6gzJx"],["2025-12-21","It","2017","4",0,"https://boxd.it/c9jgeN"],["2025-12-30","Train to Busan","2016","4.5",1,"https://boxd.it/cjJfDp"],["2026-01-01","Stranger Things 5: The Finale","2025","4",0,"https://boxd.it/cxpuft"],["2026-01-02","Good Will Hunting","1997","4.5",0,"https://boxd.it/cnJ2QV"],["2026-01-10","Yesterday","2019","3.5",1,"https://boxd.it/cyzvwT"],["2026-01-11","Ferris Bueller's Day Off","1986","3.5",0,"https://boxd.it/czP3BH"],["2026-01-13","Star Wars: Episode I – The Phantom Menace","1999","3.5",1,"https://boxd.it/cCdx6b"],["2026-01-14","Star Wars: Episode II – Attack of the Clones","2002","4",1,"https://boxd.it/cDjeGP"],["2026-01-15","Star Wars: Episode III – Revenge of the Sith","2005","5",1,"https://boxd.it/cE5gax"],["2026-01-17","Frankenstein","2025","4",0,"https://boxd.it/cGiO1j"],["2026-01-19","When Harry Met Sally...","1989","3",0,"https://boxd.it/cIKgDd"],["2026-01-22","Game Night","2018","4",1,"https://boxd.it/cKL5mv"],["2026-01-22","Rogue One: A Star Wars Story","2016","4",0,"https://boxd.it/cLyabZ"],["2026-01-27","Inglourious Basterds","2009","4.5",1,"https://boxd.it/cRdxcX"],["2026-01-28","(500) Days of Summer","2009","3.5",0,"https://boxd.it/cS9SPd"],["2026-01-31","La La Land","2016","5",1,"https://boxd.it/cUZfgv"],["2026-02-02","Crazy, Stupid, Love.","2011","5",1,"https://boxd.it/dvS7lV"],["2026-02-24","Shutter Island","2010","5",1,"https://boxd.it/dhKIPV"],["2026-03-18","Spider-Man: No Way Home","2021","5",1,"https://boxd.it/dzyrS7"],["2026-03-25","Spider-Man: Homecoming","2017","4",1,"https://boxd.it/dFtWxX"],["2026-03-28","Spider-Man: Far From Home","2019","3.5",1,"https://boxd.it/dHWjJB"],["2026-03-28","The Hunger Games","2012","5",1,"https://boxd.it/dIbh0T"],["2026-03-28","Spider-Man","2002","5",1,"https://boxd.it/dIe5KB"],["2026-03-29","Spider-Man 2","2004","5",1,"https://boxd.it/dJhGiz"],["2026-04-03","Spider-Man 3","2007","4.5",1,"https://boxd.it/dOHo2b"],["2026-04-08","Spider-Man: Into the Spider-Verse","2018","5",1,"https://boxd.it/dT9Xzr"],["2026-04-09","Spider-Man: Across the Spider-Verse","2023","4.5",1,"https://boxd.it/dTShln"],["2026-04-27","Michael","2026","5",0,"https://boxd.it/e8BjPP"],["2026-05-27","Stand by Me","1986","4.5",1,"https://boxd.it/ewZ6Ib"],["2026-05-27","Diary of a Wimpy Kid","2010","5",1,"https://boxd.it/ex1hDP"],["2026-05-31","Backrooms","2026","3.5",0,"https://boxd.it/eAqpPr"],["2026-06-06","Scary Movie","2026","2",0,"https://boxd.it/eFxGLv"],["2026-06-20","Toy Story","1995","5",1,"https://boxd.it/eRsaKt"],["2026-06-22","Toy Story 2","1999","5",1,"https://boxd.it/eTEJrj"],["2026-06-22","Toy Story 3","2010","5",1,"https://boxd.it/eTIp1N"],["2026-06-26","A Quiet Place: Day One","2024","3.5",0,"https://boxd.it/eWTsxL"],["2026-07-03","Obsession","2025","4.5",0,"https://boxd.it/f3BptD"],["2026-07-16","The Inbetweeners Movie","2011","3.5",1,"https://boxd.it/fgc4Nf"],["2026-07-19","Marty Supreme","2025","4",0,"https://boxd.it/fjS2gz"],["2026-07-23","Dune","2021","4",0,"https://boxd.it/fonP41"],["2026-07-29","Chef","2014","3.5",0,"https://boxd.it/fvEquP"],["2026-07-30","Spider-Man: Brand New Day","2026","5",0,"https://boxd.it/fwS54X"],["2026-08-02","Spider-Man: No Way Home","2021","5",1,"https://boxd.it/fAHnaX"],["2026-08-02","The 40 Year Old Virgin","2005","3.5",0,"https://boxd.it/fANe9X"],["2026-08-04","Spider-Man: Brand New Day","2026","5",1,"https://boxd.it/fDElRL"],["2026-08-13","Spider-Man","2002","5",1,"https://boxd.it/fOb54T"],["2026-08-14","Spider-Man 2","2004","5",1,"https://boxd.it/fPbmTX"],["2026-08-15","Hulk","2003","3.5",0,"https://boxd.it/fQbD6R"],["2026-08-16","The Revenant","2015","4",0,"https://boxd.it/fRaZPB"],["2026-08-17","X-Men","2000","4",1,"https://boxd.it/fSL8uj"],["2026-08-21","Spider-Man 3","2007","4",1,"https://boxd.it/fWSNcZ"],["2026-08-28","X2","2003","4",1,"https://boxd.it/g3Ysix"],["2026-08-28","Interstellar","2014","5",1,"https://boxd.it/g459sd"],["2026-08-29","Superhero Movie","2008","3",0,"https://boxd.it/g4KCKn"],["2026-08-29","Mickey 17","2025","4",0,"https://boxd.it/g4RseP"],["2026-08-29","Bugonia","2025","4.5",0,"https://boxd.it/g4Y53j"],["2026-09-06","Horrible Bosses","2011","4",0,"https://boxd.it/gcSuDV"],["2026-09-08","The Thing","1982","4.5",1,"https://boxd.it/gf0Tzt"],["2026-09-14","Iron Man","2008","4.5",1,"https://boxd.it/gknnEd"],["2026-09-17","The Avengers","2012","5",1,"https://boxd.it/gmFXpn"],["2026-09-21","Avengers: Age of Ultron","2015","4.5",1,"https://boxd.it/gqtiAB"],["2026-09-23","Captain America: Civil War","2016","5",1,"https://boxd.it/gsaxUr"],["2026-09-24","Avengers: Infinity War","2018","5",1,"https://boxd.it/gsXMeN"],["2026-09-25","Avengers: Endgame","2019","5",1,"https://boxd.it/gtCSFH"],["2026-09-29","La La Land","2016","5",1,"https://boxd.it/gxYWb7"],["2026-09-29","Snowpiercer","2013","4",1,"https://boxd.it/gy3ZiF"],["2026-09-30","Project Hail Mary","2026","4.5",0,"https://boxd.it/gyZ07x"],["2026-10-01","The Marvels","2023","3",0,"https://boxd.it/gzEECd"],["2026-10-01","Whiplash","2014","5",1,"https://boxd.it/gzI65x"],["2026-10-01","Doctor Strange in the Multiverse of Madness","2022","3.5",1,"https://boxd.it/gzNeyR"],["2026-10-02","The Nice Guys","2016","4",1,"https://boxd.it/gAvs1l"],["2026-10-02","Send Help","2026","4",0,"https://boxd.it/gAHgDL"],["2026-10-05","The Others","2001","4",0,"https://boxd.it/gDHmsh"],["2026-10-06","Exit 8","2025","3.5",0,"https://boxd.it/gEOHDj"],["2026-10-08","Prisoners","2013","5",1,"https://boxd.it/gGyPHf"],["2026-10-09","The End of Oak Street","2026","3.5",0,"https://boxd.it/gHkdjP"],["2026-10-10","Beautiful Boy","2018","4.5",0,"https://boxd.it/gIjFrJ"],["2026-10-31","Halloween","1978","3.5",0,"https://boxd.it/h4U7dv"],["2026-10-31","Hereditary","2018","4",0,"https://boxd.it/h5kR0T"],["2026-11-07","Primetime","2026","4",0,"https://boxd.it/hcq3az"]]};
+const META={"stranger things 5 the finale|2025":[["Science Fiction","Horror","Drama"],["Duffer Brothers"],["Millie Bobby Brown","Finn Wolfhard","Winona Ryder","David Harbour","Gaten Matarazzo","Caleb McLaughlin"]],"good will hunting|1997":[["Drama","Romance"],["Gus Van Sant"],["Matt Damon","Robin Williams","Ben Affleck","Minnie Driver","Stellan Skarsgård","Casey Affleck"]],"yesterday|2019":[["Comedy","Music","Romance","Fantasy"],["Danny Boyle"],["Himesh Patel","Lily James","Kate McKinnon","Joel Fry","Ed Sheeran"]],"ferris bueller s day off|1986":[["Comedy"],["John Hughes"],["Matthew Broderick","Alan Ruck","Mia Sara","Jeffrey Jones","Jennifer Grey"]],"star wars episode i the phantom menace|1999":[["Adventure","Action","Science Fiction"],["George Lucas"],["Liam Neeson","Ewan McGregor","Natalie Portman","Jake Lloyd","Ian McDiarmid","Ahmed Best"]],"star wars episode ii attack of the clones|2002":[["Adventure","Action","Science Fiction"],["George Lucas"],["Ewan McGregor","Natalie Portman","Hayden Christensen","Ian McDiarmid","Samuel L. Jackson","Christopher Lee"]],"star wars episode iii revenge of the sith|2005":[["Adventure","Action","Science Fiction"],["George Lucas"],["Ewan McGregor","Natalie Portman","Hayden Christensen","Ian McDiarmid","Samuel L. Jackson","Jimmy Smits"]],"frankenstein|2025":[["Drama","Horror","Fantasy"],["Guillermo del Toro"],["Oscar Isaac","Jacob Elordi","Mia Goth","Christoph Waltz","Felix Kammerer"]],"when harry met sally|1989":[["Comedy","Romance","Drama"],["Rob Reiner"],["Billy Crystal","Meg Ryan","Carrie Fisher","Bruno Kirby"]],"game night|2018":[["Comedy","Crime","Mystery"],["John Francis Daley","Jonathan Goldstein"],["Jason Bateman","Rachel McAdams","Kyle Chandler","Billy Magnussen","Sharon Horgan","Jesse Plemons"]],"rogue one a star wars story|2016":[["Action","Adventure","Science Fiction"],["Gareth Edwards"],["Felicity Jones","Diego Luna","Ben Mendelsohn","Donnie Yen","Mads Mikkelsen","Alan Tudyk"]],"inglourious basterds|2009":[["Drama","Thriller","War"],["Quentin Tarantino"],["Brad Pitt","Christoph Waltz","Mélanie Laurent","Michael Fassbender","Diane Kruger","Eli Roth"]],"500 days of summer|2009":[["Comedy","Drama","Romance"],["Marc Webb"],["Joseph Gordon-Levitt","Zooey Deschanel","Geoffrey Arend","Chloë Grace Moretz"]],"la la land|2016":[["Comedy","Drama","Romance","Music"],["Damien Chazelle"],["Ryan Gosling","Emma Stone","John Legend","Rosemarie DeWitt","J.K. Simmons"]],"crazy stupid love|2011":[["Comedy","Drama","Romance"],["Glenn Ficarra","John Requa"],["Steve Carell","Ryan Gosling","Julianne Moore","Emma Stone","Marisa Tomei","Kevin Bacon"]],"shutter island|2010":[["Drama","Thriller","Mystery"],["Martin Scorsese"],["Leonardo DiCaprio","Mark Ruffalo","Ben Kingsley","Michelle Williams","Emily Mortimer","Max von Sydow"]],"spider man no way home|2021":[["Action","Adventure","Science Fiction"],["Jon Watts"],["Tom Holland","Zendaya","Benedict Cumberbatch","Jacob Batalon","Jon Favreau","Willem Dafoe"]],"spider man homecoming|2017":[["Action","Adventure","Science Fiction"],["Jon Watts"],["Tom Holland","Michael Keaton","Robert Downey Jr.","Marisa Tomei","Jon Favreau","Zendaya"]],"spider man far from home|2019":[["Action","Adventure","Science Fiction"],["Jon Watts"],["Tom Holland","Samuel L. Jackson","Zendaya","Cobie Smulders","Jon Favreau","Jake Gyllenhaal"]],"the hunger games|2012":[["Science Fiction","Adventure","Action"],["Gary Ross"],["Jennifer Lawrence","Josh Hutcherson","Liam Hemsworth","Woody Harrelson","Elizabeth Banks","Stanley Tucci"]],"spider man|2002":[["Action","Science Fiction"],["Sam Raimi"],["Tobey Maguire","Willem Dafoe","Kirsten Dunst","James Franco","Cliff Robertson","Rosemary Harris"]],"spider man 2|2004":[["Action","Adventure","Science Fiction"],["Sam Raimi"],["Tobey Maguire","Kirsten Dunst","James Franco","Alfred Molina","Rosemary Harris","J.K. Simmons"]],"spider man 3|2007":[["Action","Adventure","Science Fiction"],["Sam Raimi"],["Tobey Maguire","Kirsten Dunst","James Franco","Thomas Haden Church","Topher Grace","Bryce Dallas Howard"]],"spider man into the spider verse|2018":[["Animation","Action","Adventure","Science Fiction"],["Bob Persichetti","Peter Ramsey","Rodney Rothman"],["Shameik Moore","Jake Johnson","Hailee Steinfeld","Mahershala Ali","Brian Tyree Henry","Lily Tomlin"]],"spider man across the spider verse|2023":[["Animation","Action","Adventure","Science Fiction"],["Joaquim Dos Santos","Kemp Powers","Justin K. Thompson"],["Shameik Moore","Hailee Steinfeld","Brian Tyree Henry","Luna Lauren Vélez","Jake Johnson","Oscar Isaac"]],"michael|2026":[["Drama","Music","History"],["Antoine Fuqua"],["Jaafar Jackson","Colman Domingo","Nia Long","Miles Teller","Juliano Valdi","Laura Harrier"]],"stand by me|1986":[["Drama","Adventure"],["Rob Reiner"],["Wil Wheaton","River Phoenix","Corey Feldman","Jerry O'Connell","Kiefer Sutherland"]],"diary of a wimpy kid|2010":[["Comedy","Family"],["Thor Freudenthal"],["Zachary Gordon","Robert Capron","Rachael Harris","Steve Zahn","Devon Bostick","Chloë Grace Moretz"]],"backrooms|2026":[["Horror","Science Fiction"],["Kane Parsons"],["Chiwetel Ejiofor","Renate Reinsve","Mark Duplass","Finn Bennett","Lukita Maxwell","Avan Jogia"]],"scary movie|2026":[["Comedy","Horror"],["Michael Tiddes"],["Marlon Wayans","Shawn Wayans","Anna Faris","Regina Hall"]],"toy story|1995":[["Animation","Family","Comedy","Adventure"],["John Lasseter"],["Tom Hanks","Tim Allen","Don Rickles","Jim Varney","Wallace Shawn","John Ratzenberger"]],"toy story 2|1999":[["Animation","Family","Comedy","Adventure"],["John Lasseter"],["Tom Hanks","Tim Allen","Joan Cusack","Kelsey Grammer","Don Rickles","Jim Varney"]],"toy story 3|2010":[["Animation","Family","Comedy","Adventure"],["Lee Unkrich"],["Tom Hanks","Tim Allen","Joan Cusack","Ned Beatty","Don Rickles","Michael Keaton"]],"a quiet place day one|2024":[["Horror","Science Fiction","Thriller"],["Michael Sarnoski"],["Lupita Nyong'o","Joseph Quinn","Alex Wolff","Djimon Hounsou"]],"obsession|2025":[["Horror"],["Curry Barker"],["Michael Johnston","Inde Navarrette","Cooper Tomlinson","Megan Lawless","Andy Richter"]],"the inbetweeners movie|2011":[["Comedy"],["Ben Palmer"],["Simon Bird","James Buckley","Blake Harrison","Joe Thomas","Emily Head"]],"marty supreme|2025":[["Drama","Comedy"],["Josh Safdie"],["Timothée Chalamet","Gwyneth Paltrow","Odessa A'zion","Kevin O'Leary","Tyler Okonma"]],"dune|2021":[["Science Fiction","Adventure"],["Denis Villeneuve"],["Timothée Chalamet","Rebecca Ferguson","Oscar Isaac","Josh Brolin","Stellan Skarsgård","Zendaya"]],"chef|2014":[["Comedy","Drama"],["Jon Favreau"],["Jon Favreau","Sofía Vergara","John Leguizamo","Scarlett Johansson","Dustin Hoffman","Robert Downey Jr."]],"spider man brand new day|2026":[["Action","Adventure","Science Fiction"],["Destin Daniel Cretton"],["Tom Holland","Zendaya","Jacob Batalon","Sadie Sink","Jon Bernthal","Mark Ruffalo"]],"the 40 year old virgin|2005":[["Comedy","Romance"],["Judd Apatow"],["Steve Carell","Catherine Keener","Paul Rudd","Romany Malco","Seth Rogen","Elizabeth Banks"]],"hulk|2003":[["Action","Science Fiction","Drama"],["Ang Lee"],["Eric Bana","Jennifer Connelly","Sam Elliott","Josh Lucas","Nick Nolte"]],"the revenant|2015":[["Western","Drama","Adventure","Thriller"],["Alejandro González Iñárritu"],["Leonardo DiCaprio","Tom Hardy","Will Poulter","Domhnall Gleeson"]],"x men|2000":[["Action","Science Fiction","Adventure"],["Bryan Singer"],["Hugh Jackman","Patrick Stewart","Ian McKellen","Halle Berry","Famke Janssen","Anna Paquin"]],"x2|2003":[["Action","Science Fiction","Adventure"],["Bryan Singer"],["Patrick Stewart","Hugh Jackman","Ian McKellen","Halle Berry","Famke Janssen","James Marsden"]],"interstellar|2014":[["Science Fiction","Drama","Adventure"],["Christopher Nolan"],["Matthew McConaughey","Anne Hathaway","Jessica Chastain","Michael Caine","Casey Affleck","Mackenzie Foy"]],"superhero movie|2008":[["Comedy","Action","Science Fiction"],["Craig Mazin"],["Drake Bell","Sara Paxton","Christopher McDonald","Leslie Nielsen","Kevin Hart","Marion Ross"]],"mickey 17|2025":[["Science Fiction","Comedy","Adventure"],["Bong Joon Ho"],["Robert Pattinson","Naomi Ackie","Steven Yeun","Toni Collette","Mark Ruffalo"]],"bugonia|2025":[["Comedy","Science Fiction","Thriller"],["Yorgos Lanthimos"],["Emma Stone","Jesse Plemons","Aidan Delbis","Stavros Halkias","Alicia Silverstone"]],"horrible bosses|2011":[["Comedy","Crime"],["Seth Gordon"],["Jason Bateman","Charlie Day","Jason Sudeikis","Jennifer Aniston","Colin Farrell","Kevin Spacey"]],"the thing|1982":[["Horror","Science Fiction","Mystery"],["John Carpenter"],["Kurt Russell","Wilford Brimley","Keith David","T.K. Carter","Richard Masur","Donald Moffat"]],"iron man|2008":[["Action","Science Fiction","Adventure"],["Jon Favreau"],["Robert Downey Jr.","Terrence Howard","Jeff Bridges","Gwyneth Paltrow","Leslie Bibb","Shaun Toub"]],"the avengers|2012":[["Action","Science Fiction","Adventure"],["Joss Whedon"],["Robert Downey Jr.","Chris Evans","Mark Ruffalo","Chris Hemsworth","Scarlett Johansson","Jeremy Renner"]],"avengers age of ultron|2015":[["Action","Science Fiction","Adventure"],["Joss Whedon"],["Robert Downey Jr.","Chris Evans","Mark Ruffalo","Chris Hemsworth","Scarlett Johansson","Jeremy Renner"]],"captain america civil war|2016":[["Action","Science Fiction","Adventure"],["Russo Brothers"],["Chris Evans","Robert Downey Jr.","Scarlett Johansson","Sebastian Stan","Anthony Mackie","Don Cheadle"]],"avengers infinity war|2018":[["Action","Science Fiction","Adventure"],["Russo Brothers"],["Robert Downey Jr.","Chris Hemsworth","Mark Ruffalo","Chris Evans","Scarlett Johansson","Benedict Cumberbatch"]],"avengers endgame|2019":[["Action","Science Fiction","Adventure"],["Russo Brothers"],["Robert Downey Jr.","Chris Evans","Mark Ruffalo","Chris Hemsworth","Scarlett Johansson","Jeremy Renner"]],"snowpiercer|2013":[["Science Fiction","Action","Drama"],["Bong Joon Ho"],["Chris Evans","Song Kang-ho","Tilda Swinton","Jamie Bell","Octavia Spencer","Ed Harris"]],"project hail mary|2026":[["Science Fiction","Adventure","Drama"],["Phil Lord","Christopher Miller"],["Ryan Gosling","Sandra Hüller","Lionel Boyce","Ken Leung","Milana Vayntrub"]],"the marvels|2023":[["Action","Adventure","Science Fiction"],["Nia DaCosta"],["Brie Larson","Teyonah Parris","Iman Vellani","Zawe Ashton","Park Seo-joon","Samuel L. Jackson"]],"whiplash|2014":[["Drama","Music"],["Damien Chazelle"],["Miles Teller","J.K. Simmons","Paul Reiser","Melissa Benoist","Austin Stowell"]],"doctor strange in the multiverse of madness|2022":[["Fantasy","Action","Adventure"],["Sam Raimi"],["Benedict Cumberbatch","Elizabeth Olsen","Chiwetel Ejiofor","Benedict Wong","Xochitl Gomez","Rachel McAdams"]],"the nice guys|2016":[["Action","Comedy","Crime"],["Shane Black"],["Russell Crowe","Ryan Gosling","Angourie Rice","Matt Bomer","Margaret Qualley","Kim Basinger"]],"send help|2026":[["Horror","Comedy","Thriller"],["Sam Raimi"],["Rachel McAdams","Dylan O'Brien","Edyll Ismail","Dennis Haysbert","Xavier Samuel"]],"the others|2001":[["Horror","Mystery","Thriller"],["Alejandro Amenábar"],["Nicole Kidman","Fionnula Flanagan","Christopher Eccleston","Alakina Mann","James Bentley"]],"exit 8|2025":[["Horror","Mystery","Thriller"],["Genki Kawamura"],["Kazunari Ninomiya","Yamato Kochi","Nana Komatsu","Kotone Hanase"]],"prisoners|2013":[["Drama","Thriller","Crime"],["Denis Villeneuve"],["Hugh Jackman","Jake Gyllenhaal","Viola Davis","Maria Bello","Terrence Howard","Paul Dano"]],"the end of oak street|2026":[["Science Fiction","Thriller"],["David Robert Mitchell"],["Anne Hathaway","Ewan McGregor","Maisy Stella","Christian Convery","Jordan Alexa Davis","P.J. Byrne"]],"beautiful boy|2018":[["Drama"],["Felix van Groeningen"],["Steve Carell","Timothée Chalamet","Maura Tierney","Amy Ryan"]],"halloween|1978":[["Horror","Thriller"],["John Carpenter"],["Jamie Lee Curtis","Donald Pleasence","Nancy Kyes","P.J. Soles","Charles Cyphers"]],"hereditary|2018":[["Horror","Drama","Mystery"],["Ari Aster"],["Toni Collette","Alex Wolff","Milly Shapiro","Gabriel Byrne","Ann Dowd"]],"primetime|2026":[["Crime","Drama"],["Lance Oppenheim"],["Robert Pattinson","Phoebe Bridgers","Merritt Wever","Sean Bridgers","Skyler Gisondo","Matthew Maher"]]};
+const DLS="boxdbuddy-diary-v1",MLS="boxdbuddy-meta-v1";
+const diary={rows:BUNDLED.rows,updatedAt:BUNDLED.at,bundled:true};
+let extraMeta={},statYear=String(new Date().getFullYear()),openCard=null,looking=false;
+const mkey=(t,y)=>key({t,y});
+function metaFor(t,y){const k=mkey(t,y);return META[k]||extraMeta[k]||null;}
+try{const r=JSON.parse(localStorage.getItem(DLS)||"null");if(r&&Array.isArray(r.rows)){diary.rows=r.rows;diary.updatedAt=r.updatedAt;diary.bundled=false;}}catch(e){}
+try{extraMeta=JSON.parse(localStorage.getItem(MLS)||"{}")||{};}catch(e){}
+async function saveDiary(){
+  const o={kind:"diary",rows:diary.rows,updatedAt:diary.updatedAt};
+  try{localStorage.setItem(DLS,JSON.stringify(o));}catch(e){}
+  if(mode==="cloud"){try{await coll.doc("diary").set(o);}catch(e){toast("Couldn't save your diary to your account.");}}
+}
+async function saveMeta(){
+  try{localStorage.setItem(MLS,JSON.stringify(extraMeta));}catch(e){}
+  if(mode==="cloud"){try{await coll.doc("filmmeta").set({kind:"filmmeta",films:extraMeta});}catch(e){}}
+}
+function watchCloudStats(){
+  coll.doc("diary").onSnapshot(s=>{const v=s&&s.exists?s.data():null;
+    if(v&&Array.isArray(v.rows)){diary.rows=v.rows;diary.updatedAt=v.updatedAt;diary.bundled=false;try{localStorage.setItem(DLS,JSON.stringify(v));}catch(e){}renderStats();}
+    else if(!diary.bundled)saveDiary();},()=>{});
+  coll.doc("filmmeta").onSnapshot(s=>{const v=s&&s.exists?s.data():null;
+    if(v&&v.films){extraMeta=Object.assign({},extraMeta,v.films);try{localStorage.setItem(MLS,JSON.stringify(extraMeta));}catch(e){}renderStats();}},()=>{});
+}
+function diaryFromCSV(text){
+  const rows=parseCSV(text.replace(/^﻿/,""));if(!rows.length)return null;
+  const h=rows[0].map(x=>x.trim().toLowerCase());
+  const wi=h.indexOf("watched date"),ni=h.indexOf("name"),yi=h.indexOf("year"),ri=h.indexOf("rating"),rw=h.indexOf("rewatch"),ui=h.indexOf("letterboxd uri");
+  if(wi<0||ni<0)return null;
+  return rows.slice(1).map(r=>[(r[wi]||"").trim(),(r[ni]||"").trim(),(r[yi]||"").trim(),(r[ri]||"").trim(),/yes/i.test(r[rw]||"")?1:0,(r[ui]||"").trim()]).filter(r=>r[0]&&r[1]);
+}
+
+function tally(films,pick){
+  const m=new Map();
+  films.forEach(f=>{const md=metaFor(f.t,f.y);if(!md)return;new Set(pick(md)).forEach(n=>{if(!n)return;const e=m.get(n)||{n,films:[],w:0,rs:[]};e.films.push(f);e.w+=f.w;if(f.r)e.rs.push(f.r);m.set(n,e);});});
+  const avg=e=>e.rs.length?e.rs.reduce((a,b)=>a+b,0)/e.rs.length:0;
+  return [...m.values()].sort((a,b)=>b.films.length-a.films.length||b.w-a.w||avg(b)-avg(a)||a.n.localeCompare(b.n));
+}
+function computeYear(y){
+  const es=diary.rows.filter(r=>r[0].slice(0,4)===y);
+  const by=new Map();
+  es.forEach(r=>{const k=mkey(r[1],r[2]);const f=by.get(k)||{t:r[1],y:r[2],w:0,rs:[],r:0,last:"",u:r[5]};f.w++;if(r[3])f.rs.push(+r[3]);if(r[0]>=f.last){f.last=r[0];f.u=r[5];}by.set(k,f);});
+  const films=[...by.values()];films.forEach(f=>{f.r=f.rs.length?f.rs[f.rs.length-1]:0;});
+  const rated=es.filter(r=>r[3]).map(r=>+r[3]);
+  return{es,films,rated,avg:rated.length?rated.reduce((a,b)=>a+b,0)/rated.length:0,
+    rewatches:es.filter(r=>r[4]).length,missing:films.filter(f=>!metaFor(f.t,f.y)),
+    genres:tally(films,m=>m[0]),directors:tally(films,m=>m[1]),actors:tally(films,m=>(m[2]||[]).slice(0,6))};
+}
+const stars=r=>{if(!r)return"";const f=Math.floor(r);return"★".repeat(f)+(r%1?"½":"");};
+const filmLink=f=>'<a href="'+esc(f.u||lbSearch(f))+'" target="_blank" rel="noopener" style="color:inherit">'+esc(f.t)+'<\/a>';
+function topList(items,countOf,labelOf,filmsOf){
+  if(!items.length)return'<p class="small muted" style="margin:0">Nothing to show yet.<\/p>';
+  const max=countOf(items[0])||1;
+  return'<ol class="top5">'+items.slice(0,5).map((e,i)=>'<li><span class="rk">'+(i+1)+'<\/span><span class="nm">'+labelOf(e)+'<\/span><span class="ct">'+esc(e._ct)+'<\/span><span class="bar"><i style="width:'+Math.max(4,Math.round(countOf(e)/max*100))+'%"><\/i><\/span>'+(filmsOf?'<span class="fl">'+filmsOf(e)+'<\/span>':'')+'<\/li>').join("")+'<\/ol>';
+}
+function peopleDetail(list,title){
+  list.forEach(e=>{e._ct=e.films.length+" film"+(e.films.length===1?"":"s")+(e.w>e.films.length?" · "+e.w+" watches":"");});
+  return'<h3>'+title+'<\/h3>'+topList(list,e=>e.films.length,e=>esc(e.n),e=>{const fs=e.films.slice().sort((a,b)=>b.w-a.w||b.r-a.r);return fs.slice(0,6).map(filmLink).join(", ")+(fs.length>6?" and "+(fs.length-6)+" more":"");});
+}
+function renderStats(){
+  if($("viewStats").hidden)return;
+  const ys=[...new Set(diary.rows.map(r=>r[0].slice(0,4)))].filter(Boolean).sort().reverse();
+  if(!ys.includes(statYear))statYear=ys[0]||statYear;
+  $("sYear").textContent=statYear;
+  $("years").innerHTML=ys.length>1?ys.map(y=>'<button data-year="'+y+'" aria-pressed="'+(y===statYear)+'">'+y+'<\/button>').join(""):"";
+  const s=computeYear(statYear);
+  if(!s.es.length){$("sgrid").innerHTML='<p class="muted" style="grid-column:1/-1">No diary entries for '+statYear+' yet. Log films on Letterboxd, then bring in a fresh export below.<\/p>';$("missing").hidden=true;return;}
+  const top=(l,f)=>l[0]?l[0].n:"—";
+  const sub=l=>l[0]?l[0].films.length+" film"+(l[0].films.length===1?"":"s")+(l[1]&&l[1].films.length===l[0].films.length?" · tied with "+esc(l[1].n):""):"Needs film info";
+  const cards=[
+    {id:"films",lab:"Movies watched",big:String(s.es.length),sub:s.films.length+" different films · "+s.rewatches+" rewatch"+(s.rewatches===1?"":"es")},
+    {id:"rating",lab:"Average rating",big:s.avg?s.avg.toFixed(2)+'<small>★<\/small>':"—",sub:s.rated.length+" rated entries"},
+    {id:"genre",wide:1,lab:"Top genre",big:esc(top(s.genres)),sub:sub(s.genres)},
+    {id:"director",wide:1,lab:"Top director",big:esc(top(s.directors)),sub:sub(s.directors)},
+    {id:"actor",wide:1,lab:"Top actor",big:esc(top(s.actors)),sub:sub(s.actors)}];
+  $("sgrid").innerHTML=cards.map(c=>{const o=openCard===c.id;
+    return'<div class="stat'+(c.wide?" wide":"")+'"'+(o?" data-open":"")+'><button data-card="'+c.id+'" aria-expanded="'+o+'"><span class="lab">'+c.lab+'<\/span><span class="big">'+c.big+'<\/span><span class="chev">'+(o?"Hide":"Top 5")+'<\/span><span class="sub">'+c.sub+'<\/span><\/button>'+(o&&c.wide?'<div class="detail">'+detail(c.id,s)+'<\/div>':'')+'<\/div>'+(c.id==="rating"&&(openCard==="films"||openCard==="rating")?'<div class="stat wide" data-open><div class="detail" style="border-top:0">'+detail(openCard,s)+'<\/div><\/div>':'');}).join("");
+  const n=s.missing.length;
+  if(n){
+    $("missing").hidden=false;
+    $("missing").innerHTML='<h2>'+n+' film'+(n===1?"":"s")+' need info<\/h2><p class="small muted" style="margin:0">Genre, director and cast stats leave out '+esc(s.missing.slice(0,4).map(f=>f.t).join(", "))+(n>4?" and "+(n-4)+" more":"")+'. Letterboxd\'s export doesn\'t include that info, so BoxdBuddy asks Claude to fill it in.<\/p><div class="row"><button id="lookup"'+(looking?" disabled":"")+'>'+(looking?"Looking them up…":"Fill in film info")+'<\/button><\/div>';
+  }else $("missing").hidden=true;
+  $("src").textContent=diary.bundled?"Using your Letterboxd export from 11 Nov 2026. Bring in a newer one below to update these stats.":(diary.updatedAt?"Diary last updated from Letterboxd "+fmtWhen(diary.updatedAt):"");
+}
+function detail(id,s){
+  if(id==="films"){
+    const most=s.films.slice().sort((a,b)=>b.w-a.w||b.r-a.r||b.last.localeCompare(a.last));
+    most.forEach(f=>f._ct=f.w+"×");
+    const mc=Array(12).fill(0);s.es.forEach(r=>mc[+r[0].slice(5,7)-1]++);const mx=Math.max(...mc,1);
+    const ML="JFMAMJJASOND";
+    return'<h3>Most watched this year<\/h3>'+topList(most,f=>f.w,f=>filmLink(f)+' <span class="muted small">'+esc(f.y)+'<\/span>')+
+      '<h3>By month<\/h3><div class="months" role="img" aria-label="Films watched per month">'+mc.map((c,i)=>'<div class="hist" style="display:flex;height:100%"><div><b>'+(c||"")+'<\/b><i class="'+(c?"":"zero")+'" style="height:'+Math.round(c/mx*56)+'px"><\/i><span>'+ML[i]+'<\/span><\/div><\/div>').join("")+'<\/div>';
+  }
+  if(id==="rating"){
+    const best=s.films.filter(f=>f.r).sort((a,b)=>b.r-a.r||b.w-a.w||a.last.localeCompare(b.last));
+    best.forEach(f=>f._ct=stars(f.r));
+    const fives=best.filter(f=>f.r===5).length;
+    const h=Array(10).fill(0);s.rated.forEach(r=>h[Math.round(r*2)-1]++);const mx=Math.max(...h,1);
+    return'<h3>Highest rated<\/h3>'+topList(best,f=>f.r,f=>filmLink(f)+' <span class="muted small">'+esc(f.y)+'<\/span>')+(fives>5?'<p class="small muted" style="margin:0">'+fives+' films got ★★★★★ this year.<\/p>':'')+
+      '<h3>Your ratings<\/h3><div class="hist" role="img" aria-label="Ratings spread">'+h.map((c,i)=>'<div><b>'+(c||"")+'<\/b><i class="'+(c?"":"zero")+'" style="height:'+Math.round(c/mx*58)+'px"><\/i><span>'+((i+1)/2)+'<\/span><\/div>').join("")+'<\/div>';
+  }
+  if(id==="genre")return peopleDetail(s.genres,"Top genres");
+  if(id==="director")return peopleDetail(s.directors,"Top directors");
+  return peopleDetail(s.actors,"Top actors")+'<p class="small muted" style="margin:0">Counts the top-billed cast of each film.<\/p>';
+}
+async function lookupMissing(){
+  if(looking)return;
+  const s=computeYear(statYear);const todo=s.missing.slice(0,40);if(!todo.length)return;
+  const sample=window.claude&&typeof claude.use==="function"?await claude.use("sample"):null;
+  if(!sample){toast("Film lookup only works in the claude.ai version. Ask Claude in your BoxdBuddy project to add these films.");return;}
+  looking=true;renderStats();
+  try{
+    const list=todo.map(f=>({key:mkey(f.t,f.y),title:f.t,year:f.y}));
+    const out=await sample.json("For each film below, give its genres (TMDB genre names such as Action, Adventure, Animation, Comedy, Crime, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, Thriller, War, Western), its director(s), and its top-billed cast in billing order (up to 6 actors). If you don't know a film, give empty arrays. Reply with only a JSON object mapping each key to {\"genres\":[],\"directors\":[],\"cast\":[]}.\n\nFilms:\n"+JSON.stringify(list),{modelTier:"default"});
+    let got=0;
+    list.forEach(f=>{const v=out&&out[f.key];if(v&&(v.genres||v.directors||v.cast)){const a=x=>Array.isArray(x)?x.filter(s=>typeof s==="string").slice(0,8):[];extraMeta[f.key]=[a(v.genres),a(v.directors),a(v.cast).slice(0,6)];if(extraMeta[f.key].some(z=>z.length))got++;}});
+    await saveMeta();toast("Filled in "+got+" of "+list.length+" films");
+  }catch(e){toast(e&&e.code==="not_granted"?"Film lookup was turned off for this page.":"Couldn't look those films up. Try again in a minute.");}
+  looking=false;renderStats();
+}
+$("viewStats").addEventListener("click",e=>{
+  const c=e.target.closest("[data-card]");if(c){openCard=openCard===c.dataset.card?null:c.dataset.card;renderStats();return;}
+  const y=e.target.closest("[data-year]");if(y){statYear=y.dataset.year;openCard=null;renderStats();return;}
+  if(e.target.closest("#lookup"))lookupMissing();
+});
+function showTab(t){
+  const st=t==="stats";$("viewStats").hidden=!st;$("viewPick").hidden=st;
+  $("tabStats").setAttribute("aria-selected",st);$("tabPick").setAttribute("aria-selected",!st);
+  try{localStorage.setItem("boxdbuddy-tab",t);}catch(e){}
+  if(location.hash!=="#"+t)history.replaceState(null,"","#"+t);
+  renderStats();
+}
+$("tabPick").addEventListener("click",()=>showTab("pick"));
+$("tabStats").addEventListener("click",()=>showTab("stats"));
+window.addEventListener("hashchange",()=>{if(location.hash==="#stats"||location.hash==="#pick")showTab(location.hash.slice(1));});
+
+let startTab=location.hash==="#stats"?"stats":location.hash==="#pick"?"pick":null;
+if(!startTab){try{startTab=localStorage.getItem("boxdbuddy-tab");}catch(e){}}
+showTab(startTab==="stats"?"stats":"pick");
+initStore();
+})();
+</script>
+
+</body>
+</html>
