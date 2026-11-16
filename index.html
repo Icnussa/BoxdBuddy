@@ -626,7 +626,7 @@ $("viewStats").addEventListener("click",e=>{
 /* ---------- vibe questions ----------
    Offbeat questions that never mention films. Each answer quietly adds weight to genres (TMDB names),
    eras (_old <2000, _mid 2000-2019, _new 2020+) and faces (_fav = people from films you loved, _fresh = nobody you've logged).
-   4 are drawn at random each time, then the time question, which is a hard filter. */
+   4 are drawn at random each time, avoiding ones seen in recent rounds, then the time question, which is a hard filter. */
 const VQ=[
  {q:"Pick a snack.",o:[
   ["Popcorn, extra butter",{Action:2,Adventure:2,"Science Fiction":1}],
@@ -685,7 +685,137 @@ const VQ=[
   ["Low battery",{Comedy:1,Animation:1,Family:1,_fav:1}],
   ["Main character",{Drama:1,Adventure:1,Romance:1,Action:1}],
   ["Feral",{Horror:2,Action:1,Comedy:1}],
-  ["Quietly plotting",{Crime:2,Thriller:2,Mystery:1}]]}
+  ["Quietly plotting",{Crime:2,Thriller:2,Mystery:1}]]},
+ {q:"Pick a drink.",o:[
+  ["Energy drink",{Action:2,Thriller:1}],
+  ["Hot chocolate",{Family:2,Animation:1,Romance:1}],
+  ["Black coffee, no sugar",{Crime:2,Drama:1,Mystery:1}],
+  ["Something fizzy and bright",{Comedy:2,Adventure:1}],
+  ["A glass of red",{Drama:2,Romance:1,_old:1}]]},
+ {q:"Which room of a house are you?",o:[
+  ["The kitchen at a party",{Comedy:2,Romance:1}],
+  ["The attic",{Horror:2,Mystery:2}],
+  ["The garage full of tools",{Action:1,Crime:1,"Science Fiction":1}],
+  ["A bedroom with fairy lights",{Romance:2,Drama:1,Fantasy:1}],
+  ["The basement",{Horror:2,Thriller:2}]]},
+ {q:"Pick a holiday.",o:[
+  ["Backpacking with no plan",{Adventure:3,_fresh:1}],
+  ["All-inclusive, sun lounger",{Comedy:2,Romance:1}],
+  ["A rainy city break",{Drama:2,Mystery:1,Romance:1}],
+  ["Somewhere remote and a bit scary",{Thriller:2,Horror:1,Adventure:1}],
+  ["Theme park",{Animation:1,Family:2,Action:1}]]},
+ {q:"What colour is today?",o:[
+  ["Grey",{Drama:2,Mystery:1}],
+  ["Bright yellow",{Comedy:2,Family:1}],
+  ["Deep red",{Thriller:2,Horror:1,Romance:1}],
+  ["Electric blue",{"Science Fiction":2,Action:1}],
+  ["Soft green",{Fantasy:1,Family:1,Drama:1,Adventure:1}]]},
+ {q:"Pick a game.",o:[
+  ["Monopoly, and I'm ruthless",{Crime:2,Comedy:1}],
+  ["Hide and seek in the dark",{Horror:2,Thriller:1}],
+  ["Charades",{Comedy:3}],
+  ["A big puzzle",{Mystery:3}],
+  ["Something on the old console",{_old:2,Action:1,Adventure:1}]]},
+ {q:"How do you take your eggs?",o:[
+  ["Scrambled, chaotic",{Comedy:2,Action:1}],
+  ["Poached, delicate",{Drama:1,Romance:2}],
+  ["Fried, crispy edges",{Action:1,Crime:1,Thriller:1}],
+  ["I don't. Cereal",{Animation:1,Family:2}],
+  ["Whatever's quickest",{_fav:1,Comedy:1}]]},
+ {q:"Which animal are you tonight?",o:[
+  ["A cat on a radiator",{Comedy:1,Romance:1,Animation:1,Family:1}],
+  ["A wolf",{Thriller:2,Action:1,Horror:1}],
+  ["An owl",{Mystery:2,Drama:1,Fantasy:1}],
+  ["A golden retriever",{Comedy:2,Family:1,Adventure:1}],
+  ["Something deep sea",{"Science Fiction":2,Horror:1}]]},
+ {q:"Pick a time of day.",o:[
+  ["Golden hour",{Romance:2,Drama:1}],
+  ["3am",{Horror:2,Thriller:1,Mystery:1}],
+  ["Lazy midday",{Comedy:2,Family:1}],
+  ["Sunrise",{Adventure:2,Drama:1}],
+  ["Rush hour",{Action:2,Crime:1}]]},
+ {q:"You find a mystery box on your doorstep. You…",o:[
+  ["Open it immediately",{Action:1,Adventure:2,Comedy:1}],
+  ["Shake it first",{Comedy:2,Mystery:1}],
+  ["Call someone. Absolutely not",{Horror:2,Thriller:1}],
+  ["Look for clues on who left it",{Mystery:2,Crime:1}],
+  ["Leave it for tomorrow",{Drama:1,_fav:1,Romance:1}]]},
+ {q:"Which era would you live in?",o:[
+  ["The 80s",{_old:3,Comedy:1,Adventure:1}],
+  ["The 2000s",{_mid:3,Comedy:1}],
+  ["Right now",{_new:3}],
+  ["The far future",{"Science Fiction":3,_new:1}],
+  ["Medieval anything",{Fantasy:2,Adventure:1,_old:1}]]},
+ {q:"What's on your playlist?",o:[
+  ["Old songs my parents played",{_old:3,Drama:1}],
+  ["Whatever's trending",{_new:2,Comedy:1}],
+  ["Film scores",{Adventure:2,Drama:1,"Science Fiction":1}],
+  ["Sad indie",{Drama:2,Romance:2}],
+  ["Loud, fast, heavy",{Action:2,Horror:1}]]},
+ {q:"Pick a shoe.",o:[
+  ["Slippers",{Family:2,Comedy:1}],
+  ["Running shoes",{Action:2,Thriller:1}],
+  ["Hiking boots",{Adventure:3}],
+  ["Fancy shoes I can't walk in",{Romance:2,Comedy:1}],
+  ["Barefoot",{Drama:1,Fantasy:1,_fresh:1}]]},
+ {q:"How messy is your room right now?",o:[
+  ["Spotless",{Mystery:1,Thriller:1,Drama:1}],
+  ["Organised chaos",{Comedy:2,Adventure:1}],
+  ["Crime scene",{Crime:2,Horror:1,Comedy:1}],
+  ["I'm not in my room",{Adventure:2,_fresh:1}]]},
+ {q:"Pick a hero.",o:[
+  ["The underdog",{Drama:2,Comedy:1}],
+  ["The smooth criminal",{Crime:3}],
+  ["The final girl",{Horror:3}],
+  ["The one with a cape",{Action:2,"Science Fiction":1,Adventure:1}],
+  ["The kid who saves the day",{Family:2,Animation:1,Adventure:1}]]},
+ {q:"It's pouring rain. What are you doing?",o:[
+  ["Dancing in it",{Romance:2,Comedy:1}],
+  ["Under a blanket",{Family:1,Animation:1,Comedy:1,_fav:1}],
+  ["Staring out the window, thinking",{Drama:2,Mystery:1}],
+  ["Listening for something outside",{Horror:2,Thriller:1}]]},
+ {q:"Pick a pizza.",o:[
+  ["Margherita, classic",{_old:2,_fav:1,Drama:1}],
+  ["Pineapple, fight me",{Comedy:3}],
+  ["Extra hot chilli",{Action:2,Thriller:1}],
+  ["Something weird I've never tried",{_fresh:2,"Science Fiction":1,Mystery:1}],
+  ["Half and half, to share",{Romance:2,Family:1}]]},
+ {q:"Who would you rather have dinner with?",o:[
+  ["A famous comedian",{Comedy:3}],
+  ["A retired detective",{Crime:2,Mystery:2}],
+  ["An astronaut",{"Science Fiction":2,Adventure:1}],
+  ["Your grandparents",{_old:2,Drama:1,Family:1}],
+  ["A total stranger",{_fresh:2,Thriller:1}]]},
+ {q:"What's your phone battery at?",o:[
+  ["100%, I'm prepared",{Action:1,Thriller:1,Adventure:1}],
+  ["About half",{Comedy:1,Drama:1}],
+  ["4% and living dangerously",{Thriller:2,Horror:1,Comedy:1}],
+  ["It died hours ago",{Drama:1,Mystery:1,_old:1}]]},
+ {q:"Pick a smell.",o:[
+  ["Fresh laundry",{Family:1,Romance:1,Comedy:1}],
+  ["Campfire",{Adventure:2,Horror:1}],
+  ["Petrol station",{Action:1,Crime:2}],
+  ["Old books",{Mystery:1,Drama:1,_old:2}],
+  ["The ocean",{Adventure:1,Drama:1,Romance:1}]]},
+ {q:"How would your friends describe you this week?",o:[
+  ["The funny one",{Comedy:3}],
+  ["Quiet, a bit off",{Drama:2,Mystery:1}],
+  ["On a mission",{Action:2,Thriller:1}],
+  ["Soft",{Romance:2,Family:1}],
+  ["Unhinged",{Horror:1,Comedy:1,Crime:1}]]},
+ {q:"Pick a door.",o:[
+  ["A tiny wooden one in a tree",{Fantasy:2,Family:1,Animation:1}],
+  ["A steel vault door",{Crime:2,Thriller:1}],
+  ["An airlock",{"Science Fiction":3}],
+  ["Your front door, home at last",{_fav:2,Drama:1,Comedy:1}],
+  ["One that's already slightly open",{Horror:2,Mystery:1}]]},
+ {q:"What's for dinner?",o:[
+  ["Takeaway in front of the telly",{Comedy:2,_fav:1}],
+  ["Something I cooked from scratch",{Drama:1,Romance:1,Family:1}],
+  ["Toast. Again",{Comedy:1,Drama:1}],
+  ["A new place I've never tried",{_fresh:2,_new:1,Adventure:1}],
+  ["Cold leftovers at midnight",{Horror:1,Crime:1,Thriller:1}]]}
+
 ];
 const TIMEQ={q:"Last one. How long have you got?",o:[
   {b:"Not long",s:"Under 1h 45m",t:m=>m>0&&m<105},
@@ -747,7 +877,12 @@ function vibeRead(){
 }
 function openQuiz(){
   const pool=VQ.slice();for(let i=pool.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  /* prefer questions you haven't seen in the last few rounds */
+  let recent=[];try{recent=JSON.parse(localStorage.getItem("boxdbuddy-recentq")||"[]")||[];}catch(e){}
+  pool.sort((a,b)=>recent.includes(a.q)-recent.includes(b.q));
   quiz.qs=pool.slice(0,QN);quiz.ans=[];quiz.step=0;quiz.tie={};
+  recent=quiz.qs.map(q=>q.q).concat(recent.filter(q=>!quiz.qs.some(x=>x.q===q))).slice(0,Math.max(0,VQ.length-QN*2));
+  try{localStorage.setItem("boxdbuddy-recentq",JSON.stringify(recent));}catch(e){}
   $("quiz").hidden=false;$("vibe").setAttribute("aria-expanded","true");renderQuiz();$("quiz").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function closeQuiz(){$("quiz").hidden=true;$("vibe").setAttribute("aria-expanded","false");}
