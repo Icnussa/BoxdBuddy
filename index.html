@@ -194,6 +194,7 @@ ol.top5 .fl{grid-column:2/-1;font-size:.8rem;color:var(--muted);min-width:0}
 .opt em small{display:block;font-family:var(--body);font-size:.6rem;font-weight:600;color:var(--muted);text-align:right;letter-spacing:.04em}
 .opt:hover:not(:disabled){border-color:var(--accent)}
 .opt.any{border-style:dashed}
+.opts.plain .opt{padding:14px 16px;grid-template-columns:1fr}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips span{font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
 ul.short{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:460px;overflow:auto}
@@ -240,7 +241,7 @@ ul.short .sw{font-size:.78rem;color:var(--muted);min-width:0;line-height:1.3}
   </section>
   <div class="modes">
     <button class="primary" id="pick">Totally random<small>Any film on your watchlist</small></button>
-    <button class="vibebtn" id="vibe" aria-expanded="false" aria-controls="quiz">Match my vibe<small>4 quick questions</small></button>
+    <button class="vibebtn" id="vibe" aria-expanded="false" aria-controls="quiz">Match my vibe<small>5 odd little questions</small></button>
   </div>
   <section class="panel quiz" id="quiz" hidden aria-live="polite"></section>
 
@@ -622,30 +623,81 @@ $("viewStats").addEventListener("click",e=>{
   if(e.target.closest("#lookup"))lookupMissing();
 });
 
-/* ---------- vibe questions ---------- */
-const MOODS=[
-  {id:"laugh",b:"Make me laugh",s:"Comedy",g:["Comedy"]},
-  {id:"edge",b:"Keep me on edge",s:"Thriller, horror, mystery, crime",g:["Thriller","Horror","Mystery","Crime"]},
-  {id:"big",b:"Take me somewhere big",s:"Action, adventure, sci-fi, fantasy",g:["Action","Adventure","Science Fiction","Fantasy"]},
-  {id:"feel",b:"Make me feel something",s:"Drama, romance",g:["Drama","Romance"]},
-  {id:"cosy",b:"Easy and cosy",s:"Animation, family",g:["Animation","Family"]}
+/* ---------- vibe questions ----------
+   Offbeat questions that never mention films. Each answer quietly adds weight to genres (TMDB names),
+   eras (_old <2000, _mid 2000-2019, _new 2020+) and faces (_fav = people from films you loved, _fresh = nobody you've logged).
+   4 are drawn at random each time, then the time question, which is a hard filter. */
+const VQ=[
+ {q:"Pick a snack.",o:[
+  ["Popcorn, extra butter",{Action:2,Adventure:2,"Science Fiction":1}],
+  ["Sour sweets",{Comedy:2,Horror:1}],
+  ["Tea and biscuits",{Drama:2,Romance:2,Family:1,_old:1}],
+  ["Spicy crisps",{Thriller:2,Crime:2,Horror:1}],
+  ["Cereal at midnight",{Animation:2,Family:2,Comedy:1}]]},
+ {q:"What's the weather doing in your head?",o:[
+  ["Thunderstorm",{Thriller:2,Horror:2,Crime:1}],
+  ["Sunny with a breeze",{Comedy:2,Romance:1,Adventure:1}],
+  ["Thick fog",{Mystery:3,"Science Fiction":1,Drama:1}],
+  ["Snow day",{Family:2,Animation:1,Fantasy:2}],
+  ["Heatwave",{Action:3,Crime:1}]]},
+ {q:"How was today, honestly?",o:[
+  ["Long. I'm cooked",{Comedy:2,Animation:2,Family:1,_fav:1}],
+  ["Weirdly fine",{Comedy:1,Adventure:1,Mystery:1}],
+  ["Restless, I need a jolt",{Action:2,Thriller:2,Horror:1}],
+  ["Thinking way too much",{Drama:2,Mystery:2,"Science Fiction":1}],
+  ["Pretty great actually",{Comedy:2,Romance:1,Adventure:2}]]},
+ {q:"Where would you rather be right now?",o:[
+  ["A cabin in the woods, alone",{Horror:3,Mystery:1,Thriller:1}],
+  ["A rooftop party",{Comedy:2,Romance:1,Music:1,_new:1}],
+  ["Looking out a spaceship window",{"Science Fiction":3,Adventure:1}],
+  ["Your childhood bedroom",{Family:2,Animation:1,_old:2,_fav:1}],
+  ["A diner at 3am",{Crime:2,Drama:1,Thriller:1}]]},
+ {q:"Pick a sound.",o:[
+  ["Rain on a window",{Drama:2,Romance:2,Mystery:1}],
+  ["A crowd roaring",{Action:2,Drama:1,Adventure:1}],
+  ["A creaky floorboard",{Horror:3,Mystery:1}],
+  ["Your mate's stupid laugh",{Comedy:3}],
+  ["A synth off an old cassette",{_old:3,"Science Fiction":1,Adventure:1}]]},
+ {q:"Who are you texting tonight?",o:[
+  ["An old friend",{_fav:2,_old:1,Drama:1}],
+  ["Someone I just met",{_fresh:2,_new:1,Romance:1}],
+  ["The group chat, it's chaos",{Comedy:2,_new:1}],
+  ["Nobody. Phone's on silent",{Thriller:1,Drama:1,Mystery:1,_fresh:1}]]},
+ {q:"Pick a phone wallpaper.",o:[
+  ["An old family photo",{_old:2,Family:1,Drama:1}],
+  ["A neon city at night",{Crime:2,Thriller:1,"Science Fiction":1,_new:1}],
+  ["A meme that shouldn't be funny",{Comedy:3}],
+  ["Mountains",{Adventure:2,Drama:1}],
+  ["Plain black",{Horror:1,Mystery:2,Thriller:1}]]},
+ {q:"Perfect Sunday morning?",o:[
+  ["Lie in until noon",{Comedy:1,Animation:1,Family:1,Romance:1}],
+  ["Up early for a run",{Action:2,Adventure:1,Thriller:1}],
+  ["Big brunch with mates",{Comedy:2,Romance:1}],
+  ["Something I've done a hundred times",{_fav:3,_old:1}],
+  ["Wandering somewhere new",{_fresh:2,Adventure:1,_new:1}]]},
+ {q:"Pick a superpower.",o:[
+  ["Read minds",{Mystery:2,Thriller:1,Drama:1}],
+  ["Time travel",{"Science Fiction":2,_old:1,Adventure:1}],
+  ["Be invisible",{Comedy:1,Crime:1,Thriller:1}],
+  ["Super strength",{Action:3}],
+  ["Talk to animals",{Animation:2,Family:2,Fantasy:1}]]},
+ {q:"What's your energy right now?",o:[
+  ["Low battery",{Comedy:1,Animation:1,Family:1,_fav:1}],
+  ["Main character",{Drama:1,Adventure:1,Romance:1,Action:1}],
+  ["Feral",{Horror:2,Action:1,Comedy:1}],
+  ["Quietly plotting",{Crime:2,Thriller:2,Mystery:1}]]}
 ];
-const TIMES=[
-  {id:"short",b:"Quick one",s:"Under 1h 45m",t:m=>m>0&&m<105},
-  {id:"mid",b:"About two hours",s:"1h 45m to 2h 15m",t:m=>m>=105&&m<=135},
-  {id:"long",b:"I've got all night",s:"Over 2h 15m",t:m=>m>135}
-];
-const ERAS=[
-  {id:"new",b:"Something recent",s:"2020 onwards",t:y=>y>=2020},
-  {id:"mid",b:"2000s and 2010s",s:"2000 to 2019",t:y=>y>=2000&&y<2020},
-  {id:"old",b:"A classic",s:"Before 2000",t:y=>y>0&&y<2000}
-];
-const FACES=[
-  {id:"fav",b:"Someone I already love",s:"",t:i=>i.fav.length>0},
-  {id:"new",b:"Someone new to me",s:"Nobody from films you've logged",t:i=>!i.seen}
-];
-const quiz={step:0,ans:{}};
+const TIMEQ={q:"Last one. How long have you got?",o:[
+  {b:"Not long",s:"Under 1h 45m",t:m=>m>0&&m<105},
+  {b:"A normal evening",s:"1h 45m to 2h 15m",t:m=>m>=105&&m<=135},
+  {b:"All night",s:"Over 2h 15m",t:m=>m>135},
+  {b:"Doesn't matter",s:"Any length",t:()=>true,any:true}]};
+const READ={Comedy:"silly",Thriller:"tense",Horror:"a bit spooky",Drama:"in your feelings",Romance:"soft",Action:"restless",Adventure:"up for an adventure",
+  "Science Fiction":"curious",Mystery:"twisty",Crime:"up to no good",Family:"cosy",Animation:"cosy",Fantasy:"dreamy",Music:"loud"};
+const QN=4;
+const quiz={qs:[],ans:[],step:0,tie:{}};
 function fmtMin(m){if(!m)return"";const h=Math.floor(m/60),r=m%60;return(h?h+"h ":"")+(r?r+"m":"").trim();}
+function rnd(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}
 /* Favourites = people (directors + top 6 cast) in 2+ diary films you rated 4 stars or more. seen = everyone from any logged film. */
 function diaryPeople(){
   const fav=new Map(),seen=new Set(),best=new Map();
@@ -664,22 +716,40 @@ function filmInfo(){
     return{i,f,md,g:md?md[0]||[]:[],mins,y,fav,dirs:md?md[1]||[]:[],seen:ppl.some(p=>dp.seen.has(p)),known:!!md};
   });
 }
-function qList(dp){
-  const qs=[
-    {k:"mood",q:"What's the mood tonight?",opts:MOODS.map(o=>({id:o.id,b:o.b,s:o.s,t:x=>x.g.some(g=>o.g.includes(g))})),any:"Anything goes"},
-    {k:"time",q:"How much time have you got?",opts:TIMES.map(o=>({id:o.id,b:o.b,s:o.s,t:x=>o.t(x.mins)})),any:"Doesn't matter"},
-    {k:"era",q:"New or old?",opts:ERAS.map(o=>({id:o.id,b:o.b,s:o.s,t:x=>o.t(x.y)})),any:"Any era"}
-  ];
-  if(dp.fav.size){
-    const top=[...dp.fav.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
-    qs.push({k:"faces",q:"Any familiar faces?",opts:FACES.map(o=>({id:o.id,b:o.b,s:o.id==="fav"?"In 2+ films you rated 4★ or more, like "+top.join(", "):o.s,t:o.t})),any:"Don't mind"});
-  }
-  return qs;
+/* One answer's pull on one film: its strongest matching genre counts in full, other matching genres a quarter. */
+function pull(w,x){
+  const gs=x.g.map(g=>w[g]||0).sort((a,b)=>b-a);
+  let s=(gs[0]||0)+gs.slice(1).reduce((a,b)=>a+b,0)*.25;
+  if(x.y){s+=x.y<2000?(w._old||0):x.y<2020?(w._mid||0):(w._new||0);}
+  if(x.fav.length)s+=w._fav||0;
+  if(!x.seen)s+=w._fresh||0;
+  return s;
 }
-function applyAns(info,qs,upto){
-  return info.filter(x=>qs.slice(0,upto).every(q=>{const a=quiz.ans[q.k];if(!a||a==="any")return true;const o=q.opts.find(o=>o.id===a);return o?o.t(x):true;}));
+function weights(){return quiz.ans.slice(0,quiz.qs.length).map((a,n)=>quiz.qs[n].o[a][1]);}
+function shortlist(){
+  const ws=weights(),tq=TIMEQ.o[quiz.ans[quiz.qs.length]]||TIMEQ.o[3];
+  const pool=filmInfo().filter(x=>x.known&&tq.t(x.mins));
+  pool.forEach(x=>{x.score=ws.reduce((s,w)=>s+pull(w,x),0);if(!(x.i in quiz.tie))quiz.tie[x.i]=rnd();});
+  pool.sort((a,b)=>b.score-a.score||quiz.tie[a.i]-quiz.tie[b.i]);
+  if(!pool.length)return[];
+  const top=pool[0].score,cut=top*.72;
+  let out=pool.filter(x=>x.score>=cut).slice(0,8);
+  if(out.length<3)out=pool.slice(0,Math.min(3,pool.length));
+  return out;
 }
-function openQuiz(){quiz.step=0;quiz.ans={};$("quiz").hidden=false;$("vibe").setAttribute("aria-expanded","true");renderQuiz();$("quiz").scrollIntoView({behavior:"smooth",block:"nearest"});}
+function vibeRead(){
+  const tot={};weights().forEach(w=>Object.entries(w).forEach(([k,v])=>{tot[k]=(tot[k]||0)+v;}));
+  const words=[];
+  Object.entries(tot).filter(([k])=>k[0]!=="_").sort((a,b)=>b[1]-a[1]).forEach(([k])=>{const w=READ[k];if(w&&!words.includes(w)&&words.length<2)words.push(w);});
+  if((tot._old||0)>=3)words.push("a little nostalgic");else if((tot._fav||0)>=3)words.push("after a familiar face");else if((tot._fresh||0)>=2)words.push("up for someone new");
+  if(!words.length)return"";
+  return words.length===1?words[0]:words.slice(0,-1).join(", ")+" and "+words[words.length-1];
+}
+function openQuiz(){
+  const pool=VQ.slice();for(let i=pool.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  quiz.qs=pool.slice(0,QN);quiz.ans=[];quiz.step=0;quiz.tie={};
+  $("quiz").hidden=false;$("vibe").setAttribute("aria-expanded","true");renderQuiz();$("quiz").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
 function closeQuiz(){$("quiz").hidden=true;$("vibe").setAttribute("aria-expanded","false");}
 function whyLine(x){
   const bits=[];if(x.mins)bits.push(fmtMin(x.mins));if(x.g.length)bits.push(x.g.slice(0,2).join(", "));
@@ -689,34 +759,36 @@ function whyLine(x){
   return bits.join(" · ");
 }
 function renderQuiz(){
-  const el=$("quiz"),dp=diaryPeople(),info=filmInfo(),qs=qList(dp);
-  const unknown=info.filter(x=>!x.known);
-  const dots='<span class="qdots" aria-hidden="true">'+qs.map((q,i)=>'<i class="'+(i<=quiz.step?"on":"")+'"><\/i>').join("")+'<\/span>';
-  if(quiz.step<qs.length){
-    const q=qs[quiz.step],base=applyAns(info,qs,quiz.step);
-    const opts=q.opts.map(o=>{const n=base.filter(o.t).length;
-      return'<button class="opt" data-a="'+o.id+'"'+(n?"":" disabled")+'><b>'+esc(o.b)+'<\/b><span>'+esc(o.s)+'<\/span><em>'+n+'<small>film'+(n===1?"":"s")+'<\/small><\/em><\/button>';}).join("")
-      +'<button class="opt any" data-a="any"><b>'+esc(q.any)+'<\/b><span>Skip this one<\/span><em>'+base.length+'<small>film'+(base.length===1?"":"s")+'<\/small><\/em><\/button>';
-    el.innerHTML='<div class="qhead"><span class="qstep">Question '+(quiz.step+1)+' of '+qs.length+'<\/span>'+dots+'<\/div>'
-      +'<h2>'+esc(q.q)+'<\/h2><div class="opts">'+opts+'<\/div>'
-      +'<div class="row" style="justify-content:space-between">'+(quiz.step?'<button class="linkbtn" data-q="back">← Back<\/button>':'<span><\/span>')+'<button class="linkbtn" data-q="cancel">Cancel<\/button><\/div>'
-      +(quiz.step===0&&unknown.length?nudge(unknown):"");
+  const el=$("quiz"),total=quiz.qs.length+1;
+  const dots='<span class="qdots" aria-hidden="true">'+Array.from({length:total},(_,i)=>'<i class="'+(i<=quiz.step?"on":"")+'"><\/i>').join("")+'<\/span>';
+  const nav='<div class="row" style="justify-content:space-between">'+(quiz.step?'<button class="linkbtn" data-q="back">← Back<\/button>':'<span><\/span>')+'<button class="linkbtn" data-q="cancel">Cancel<\/button><\/div>';
+  if(quiz.step<quiz.qs.length){
+    const q=quiz.qs[quiz.step];
+    el.innerHTML='<div class="qhead"><span class="qstep">'+(quiz.step===0?"Don't overthink it":"Question "+(quiz.step+1)+" of "+total)+'<\/span>'+dots+'<\/div>'
+      +'<h2>'+esc(q.q)+'<\/h2><div class="opts plain">'+q.o.map((o,n)=>'<button class="opt" data-a="'+n+'"><b>'+esc(o[0])+'<\/b><\/button>').join("")+'<\/div>'+nav;
     return;
   }
-  const hits=applyAns(info,qs,qs.length);
-  const chips=qs.map(q=>{const a=quiz.ans[q.k];if(!a||a==="any")return"";const o=q.opts.find(o=>o.id===a);return o?'<span>'+esc(o.b)+'<\/span>':"";}).join("");
-  const shortList=hits.slice().sort((a,b)=>b.fav.length-a.fav.length||a.f.t.localeCompare(b.f.t));
-  el.innerHTML='<div class="qhead"><span class="qstep">Your vibe<\/span><button class="linkbtn" data-q="restart">Start over<\/button><\/div>'
-    +'<h2>'+(hits.length===1?"One film fits":hits.length+" films fit")+'<\/h2>'
-    +(chips?'<div class="chips">'+chips+'<\/div>':"")
-    +(hits.length>1?'<button class="primary" data-q="random">Choose random from these '+hits.length+'<\/button><p class="small muted" style="margin:0">Or tap the one you fancy.<\/p>':'<p class="small muted" style="margin:0">Tap it to put it on your ticket.<\/p>')
-    +'<ul class="short">'+shortList.map(x=>'<li><button data-i="'+x.i+'"'+(x.i===lastIdx?' aria-current="true"':"")+'>'+picHTML("film","mini",posterSrc(x.f),x.f.t)
+  if(quiz.step===quiz.qs.length){
+    const info=filmInfo().filter(x=>x.known);
+    el.innerHTML='<div class="qhead"><span class="qstep">Question '+total+' of '+total+'<\/span>'+dots+'<\/div>'
+      +'<h2>'+esc(TIMEQ.q)+'<\/h2><div class="opts">'+TIMEQ.o.map((o,n)=>{const c=info.filter(x=>o.t(x.mins)).length;
+        return'<button class="opt'+(o.any?" any":"")+'" data-a="'+n+'"'+(c?"":" disabled")+'><b>'+esc(o.b)+'<\/b><span>'+esc(o.s)+'<\/span><em>'+c+'<small>film'+(c===1?"":"s")+'<\/small><\/em><\/button>';}).join("")+'<\/div>'+nav;
+    return;
+  }
+  const hits=shortlist(),read=vibeRead();
+  const unknown=filmInfo().filter(x=>!x.known);
+  el.innerHTML='<div class="qhead"><span class="qstep">Your read<\/span><button class="linkbtn" data-q="restart">New questions<\/button><\/div>'
+    +'<h2>'+(read?"Tonight you seem "+esc(read):"Here's what fits")+'<\/h2>'
+    +(hits.length>1?'<p class="small muted" style="margin:0">'+hits.length+' films from your watchlist fit that. Tap the one you fancy, or let it choose.<\/p><button class="primary" data-q="random">Choose random from these '+hits.length+'<\/button>'
+      :hits.length?'<p class="small muted" style="margin:0">Only one film fits. Tap it to put it on your ticket.<\/p>':'<p class="small muted" style="margin:0">Nothing on your watchlist fits that length. Go back and pick another.<\/p>')
+    +'<ul class="short">'+hits.map(x=>'<li><button data-i="'+x.i+'"'+(x.i===lastIdx?' aria-current="true"':"")+'>'+picHTML("film","mini",posterSrc(x.f),x.f.t)
       +'<span class="st">'+esc(x.f.t)+'<\/span><span class="sy">'+esc(x.f.y||"")+'<\/span><span class="sw">'+esc(whyLine(x))+'<\/span><\/button><\/li>').join("")+'<\/ul>'
-    +'<div class="row" style="justify-content:space-between"><button class="linkbtn" data-q="back">← Change last answer<\/button><button class="linkbtn" data-q="cancel">Close<\/button><\/div>';
+    +'<div class="row" style="justify-content:space-between"><button class="linkbtn" data-q="back">← Change last answer<\/button><button class="linkbtn" data-q="cancel">Close<\/button><\/div>'
+    +(unknown.length?nudge(unknown):"");
 }
 function nudge(unknown){
   const names=unknown.slice(0,3).map(x=>x.f.t).join(", ")+(unknown.length>3?" and "+(unknown.length-3)+" more":"");
-  return'<div class="nudge"><span>'+unknown.length+' film'+(unknown.length===1?" has":"s have")+' no genre or runtime yet ('+esc(names)+'), so '+(unknown.length===1?"it only shows":"they only show")+' up if you skip every question.<\/span>'
+  return'<div class="nudge"><span>'+unknown.length+' film'+(unknown.length===1?" isn't":"s aren't")+' in the running yet because '+(unknown.length===1?"it has":"they have")+' no film info ('+esc(names)+').<\/span>'
     +(window.claude&&typeof claude.use==="function"?'<button class="linkbtn" data-q="lookup"'+(lookingWL?" disabled":"")+'>'+(lookingWL?"Looking up…":"Look them up")+'<\/button>':"")+'<\/div>';
 }
 let lookingWL=false;
@@ -738,22 +810,21 @@ async function lookupWatchlist(){
 }
 $("vibe").addEventListener("click",()=>{if($("quiz").hidden)openQuiz();else closeQuiz();});
 $("quiz").addEventListener("click",e=>{
-  const qs=qList(diaryPeople());
   const a=e.target.closest("[data-a]");
-  if(a&&!a.disabled){quiz.ans[qs[quiz.step].k]=a.dataset.a;quiz.step++;renderQuiz();
-    if(quiz.step>=qs.length){const hits=applyAns(filmInfo(),qs,qs.length);if(hits.length===1)land(hits[0].i,"The only film that fits your vibe");}
+  if(a&&!a.disabled){quiz.ans[quiz.step]=+a.dataset.a;quiz.ans.length=quiz.step+1;quiz.step++;renderQuiz();
+    if(quiz.step>quiz.qs.length){const hits=shortlist();if(hits.length===1)land(hits[0].i,"The one film that fits your vibe");}
     const h=$("quiz").querySelector("h2");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true});}
     return;}
   const b=e.target.closest("[data-q]");
   if(b){const q=b.dataset.q;
-    if(q==="back"){quiz.step=Math.max(0,Math.min(quiz.step,qs.length)-1);delete quiz.ans[qs[quiz.step].k];renderQuiz();}
+    if(q==="back"){quiz.step=Math.max(0,quiz.step-1);quiz.ans.length=quiz.step;renderQuiz();}
     else if(q==="cancel")closeQuiz();
     else if(q==="restart")openQuiz();
     else if(q==="lookup")lookupWatchlist();
-    else if(q==="random"){const hits=applyAns(filmInfo(),qs,qs.length);$("ticket").scrollIntoView({behavior:"smooth",block:"start"});roll(hits.map(x=>x.i),"Picked at random from "+hits.length+" vibe matches");}
+    else if(q==="random"){const hits=shortlist();$("ticket").scrollIntoView({behavior:"smooth",block:"start"});roll(hits.map(x=>x.i),"Picked at random from "+hits.length+" vibe matches");}
     return;}
   const p=e.target.closest("ul.short [data-i]");
-  if(p&&!spinning){const i=+p.dataset.i;$("ticket").classList.remove("idle");land(i,"Your pick from "+applyAns(filmInfo(),qs,qs.length).length+" vibe matches");$("ticket").scrollIntoView({behavior:"smooth",block:"start"});}
+  if(p&&!spinning){const i=+p.dataset.i;land(i,"Your pick from "+shortlist().length+" vibe matches");$("ticket").scrollIntoView({behavior:"smooth",block:"start"});}
 });
 function showTab(t){
   const st=t==="stats";$("viewStats").hidden=!st;$("viewPick").hidden=st;
